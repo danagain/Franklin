@@ -1,5 +1,9 @@
 const express = require( "express" );
 const bittrex = require("node-bittrex-api");
+const bodyParser = require('body-parser')
+
+// parse application/json
+app.use(bodyParser.json())
 
 let connectionString;
 if (process.env.APP_ENV === 'docker') {
