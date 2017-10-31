@@ -1,9 +1,5 @@
 const express = require( "express" );
 const bittrex = require("node-bittrex-api");
-const bodyParser = require('body-parser')
-
-// parse application/json
-app.use(bodyParser.json())
 
 let connectionString;
 if (process.env.APP_ENV === 'docker') {
@@ -36,31 +32,34 @@ const routes = () => {
         } );
     router.route( "/api/buy/:currency" )
         .post( (req, res) => {
-            bittrex.tradebuy({
-                MarketName: req.params.currency,
-                OrderType: req.body.OrderType,
-                Quantity: req.body.Quantity,
-                Rate: req.body.Rate,
-                TimeInEffect: req.body.TimeInEffect, // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
-                ConditionType: req.body.ConditionType, // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
-                Target: req.body.Target, // used in conjunction with ConditionType
-              }, ( data, err ) => {
-                res.json( data );
-              });
+            res.json(`This was the POST: ${req.body}`)
+            // bittrex.tradebuy({
+            //     MarketName: req.params.currency,
+            //     OrderType: req.body.OrderType,
+            //     Quantity: req.body.Quantity,
+            //     Rate: req.body.Rate,
+            //     TimeInEffect: req.body.TimeInEffect, // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
+            //     ConditionType: req.body.ConditionType, // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
+            //     Target: req.body.Target, // used in conjunction with ConditionType
+            //   }, ( data, err ) => {
+            //     res.json( data );
+            //   });
+
         } );
     router.route( "/api/sell/:currency" )
         .post( (req, res) => {
-            bittrex.tradesell({
-                MarketName: req.params.currency,
-                OrderType: req.body.OrderType,
-                Quantity: req.body.Quantity,
-                Rate: req.body.Rate,
-                TimeInEffect: req.body.TimeInEffect, // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
-                ConditionType: req.body.ConditionType, // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
-                Target: req.body.Target, // used in conjunction with ConditionType
-              }, ( data, err ) => {
-                res.json( data );
-              });
+            res.json(`This was the POST: ${req.body}`)
+            // bittrex.tradesell({
+            //     MarketName: req.params.currency,
+            //     OrderType: req.body.OrderType,
+            //     Quantity: req.body.Quantity,
+            //     Rate: req.body.Rate,
+            //     TimeInEffect: req.body.TimeInEffect, // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
+            //     ConditionType: req.body.ConditionType, // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
+            //     Target: req.body.Target, // used in conjunction with ConditionType
+            //   }, ( data, err ) => {
+            //     res.json( data );
+            //   });
         } );
 
     return router;
