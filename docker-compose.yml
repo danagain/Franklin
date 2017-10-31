@@ -8,6 +8,20 @@ services:
     build: ./ML
     links:
       - mongo
+  web:
+    build: ./web
+    links:
+      - web-api
+    ports:
+     - "5000:5000"
+  web-api:
+    build: ./api
+    links:
+      - mongo
+    ports:
+     - "3000:3000"
+    expose:
+      - 3000
   mongo:
     image: mongo
     ports:

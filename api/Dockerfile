@@ -1,11 +1,11 @@
-FROM 
+FROM node:latest
 
-WORKDIR 
+WORKDIR /var/app
 
-ADD 
+COPY . .
 
-RUN 
+RUN npm install
 
-ENV 
+ENV APP_ENV=docker
 
-ENTRYPOINT  
+CMD [ "npm", "start" ]
