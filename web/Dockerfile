@@ -2,7 +2,7 @@ FROM node:latest
 
 WORKDIR /var/app
 
-COPY package.json .
+COPY . .
 
 RUN npm install
 

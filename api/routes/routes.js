@@ -34,12 +34,12 @@ const routes = () => {
         .post( (req, res) => {
             bittrex.tradebuy({
                 MarketName: req.params.currency,
-                OrderType: req.OrderType,
-                Quantity: req.Quantity,
-                Rate: req.Rate,
-                TimeInEffect: req.TimeInEffect, // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
-                ConditionType: req.ConditionType, // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
-                Target: req.Target, // used in conjunction with ConditionType
+                OrderType: req.body.OrderType,
+                Quantity: req.body.Quantity,
+                Rate: req.body.Rate,
+                TimeInEffect: req.body.TimeInEffect, // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
+                ConditionType: req.body.ConditionType, // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
+                Target: req.body.Target, // used in conjunction with ConditionType
               }, ( data, err ) => {
                 res.json( data );
               });
@@ -48,12 +48,12 @@ const routes = () => {
         .post( (req, res) => {
             bittrex.tradesell({
                 MarketName: req.params.currency,
-                OrderType: req.OrderType,
-                Quantity: req.Quantity,
-                Rate: req.Rate,
-                TimeInEffect: req.TimeInEffect, // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
-                ConditionType: req.ConditionType, // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
-                Target: req.Target, // used in conjunction with ConditionType
+                OrderType: req.body.OrderType,
+                Quantity: req.body.Quantity,
+                Rate: req.body.Rate,
+                TimeInEffect: req.body.TimeInEffect, // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
+                ConditionType: req.body.ConditionType, // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
+                Target: req.body.Target, // used in conjunction with ConditionType
               }, ( data, err ) => {
                 res.json( data );
               });
