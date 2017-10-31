@@ -1,0 +1,16 @@
+version: '3'
+services:
+  streamer:
+    build: ./streamer
+    links:
+      - mongo
+  ml:
+    build: ./ML
+    links:
+      - mongo
+  mongo:
+    image: mongo
+    ports:
+     - "27017:27017"
+    expose:
+     - 27017

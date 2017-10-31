@@ -1,0 +1,5 @@
+pymongo
+numpy
+sklearn
+scipy
+matplotlib
