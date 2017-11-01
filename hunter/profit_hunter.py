@@ -1,4 +1,5 @@
 """Fill this in later"""
+import os
 import threading
 import time
 import json
@@ -125,18 +126,7 @@ if __name__ == "__main__":
     time.sleep(20)
     THREADS = []
     COINS = {0: "BTC-ETH", 1: "USDT-BTC", 2: "BTC-LTC", 3: "BTC-NEO"}
-    '''
-    if os.environ['APP_ENV'] == 'docker':
-        print("Sleeping for 20 seconds - waiting for data to be Mongo")
-        time.sleep(
-            20)  # Since this is in docker lets just wait
-            slightly here before connecting to Mongo,
-            ensures everything is up and running
-        endpoint = "mongodb://mongo:27017/franklin"
-    else:
-        endpoint = "mongodb://franklin:theSEGeswux8stat@ds241055.mlab.com:41055/franklin"
-        '''
-    ENDPOINT = "mongodb://mongo:27017/franklin"
+    ENDPOINT = os.environ['MONGO']
     for c in range(0, len(COINS)):
         t = MyThread(COINS[c])
         t.setDaemon(True)
