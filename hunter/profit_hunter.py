@@ -100,19 +100,6 @@ def thread_work(coin):
             print("Making a sell")
             profitloss += (sell - (1.0025*purchase))
             trans_count += 1
-            client = MongoClient(ENDPOINT)
-            data_base = client.franklin
-            posts = data_base.posts
-            post_data = {
-                'Coin': coin,
-                'Buy Price': purchase,
-                'Sell Price': stdupper,
-                'Transaction Profit': (sell - (1.0025*purchase)),
-                'Total Transaction Profit / Loss': profitloss,
-                'Transction': trans_count
-            }
-            result = posts.insert_one(post_data)
-            print('One post: {0}'.format(result.inserted_id))
             purchase = 0
 
         elif last_price[-1] <= (purchase * 0.85) and purchase != 0:
@@ -120,19 +107,6 @@ def thread_work(coin):
             print("Making a sell")
             trans_count += 1
             profitloss += (sell - (1.0025*purchase))
-            client = MongoClient(ENDPOINT)
-            data_base = client.franklin
-            posts = data_base.posts
-            post_data = {
-                'Coin': coin,
-                'Buy Price': purchase,
-                'Sell Price': last_price[-1],
-                'Transaction Loss': (sell - (1.0025*purchase)),
-                'Total Transaction Profit / Loss': profitloss,
-                'Transction': trans_count
-            }
-            result = posts.insert_one(post_data)
-            print('One post: {0}'.format(result.inserted_id))
             purchase = 0
 
         print('Current Purchase ', purchase)
