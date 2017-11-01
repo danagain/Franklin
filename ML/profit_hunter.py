@@ -43,18 +43,18 @@ def generate_statlists(datasource, quart_hour):
     stdhour = []
     stdupper = []
     stdlower = []
-    if datasource.count() < (2):
+    while datasource.count() < (15*6):
+        print("LOW DATA")
         time.sleep(30)
-        print("LOW DATA")
-        print("LOW DATA")
-    else:
-        for doc in datasource.find():  # Iterate stored documents
-            lastprice.append(doc['Last'])  # Store the entire collections last values in memory
-        avgrecentprice = np.mean(lastprice[len(lastprice) - quart_hour : -1])
-        recentstd = np.std(lastprice[len(lastprice) - (quart_hour):-1])
-        recentstdupper = avgrecentprice + 2*(recentstd/2)
-        recentstdlower = avgrecentprice - 2*(recentstd/2)
-        return lastprice, xaxis, meanlast, stdhour, stdupper, stdlower, avgrecentprice, recentstd, recentstdupper, recentstdlower
+
+    for doc in datasource.find():  # Iterate stored documents
+        lastprice.append(doc['Last'])  # Store the entire collections last values in memory
+        #print(lastprice)
+    avgrecentprice = np.mean(lastprice[len(lastprice) - quart_hour : -1])
+    recentstd = np.std(lastprice[len(lastprice) - (quart_hour):-1])
+    recentstdupper = avgrecentprice + 2*(recentstd/2)
+    recentstdlower = avgrecentprice - 2*(recentstd/2)
+    return lastprice, xaxis, meanlast, stdhour, stdupper, stdlower, avgrecentprice, recentstd, recentstdupper, recentstdlower
 
 def purchase(python_dict, type):
     try:
