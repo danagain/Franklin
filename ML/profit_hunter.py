@@ -1,9 +1,11 @@
 import threading
 import time
-import process_data
-import database_setup
-import os
-import buy_sell
+import numpy as np
+import time
+from pymongo import MongoClient
+import requests
+import json
+
 
 QUARTHOUR = 15 * 4 # Constant representing the data points per hour (15s intervals)
 
@@ -16,15 +18,61 @@ class mythread(threading.Thread):
         thread_work(self.coin, self.endpoint)
 
 
+def form_db_connection(coin, endpoint):
+    client = MongoClient(endpoint)  # Connect to MongoDB Client WILL NOT WORK
+    #client = MongoClient(port=27017) # But then this will work ?
+    db = client.franklin  # Access the franklin database
+    # This is not a very elegent solution but I don't know how to pass the db coin as a parameter
+    if coin == "USDT-BTC":
+        data_source = db.bitcoin
+        return data_source
+    if coin == "BTC-LTC":
+        data_source = db.ltc
+        return data_source
+    if coin == "BTC-NEO":
+        data_source = db.neo
+        return data_source
+    if coin == "BTC-ETH":
+        data_source = db.ethereum
+        return data_source
+
+def generate_statlists(datasource, quart_hour):
+    lastprice = []
+    xaxis = []
+    meanlast = []
+    stdhour = []
+    stdupper = []
+    stdlower = []
+    if datasource.count() < (2):
+        time.sleep(30)
+        print("LOW DATA")
+        print("LOW DATA")
+    else:
+        for doc in datasource.find():  # Iterate stored documents
+            lastprice.append(doc['Last'])  # Store the entire collections last values in memory
+        avgrecentprice = np.mean(lastprice[len(lastprice) - quart_hour : -1])
+        recentstd = np.std(lastprice[len(lastprice) - (quart_hour):-1])
+        recentstdupper = avgrecentprice + 2*(recentstd/2)
+        recentstdlower = avgrecentprice - 2*(recentstd/2)
+        return lastprice, xaxis, meanlast, stdhour, stdupper, stdlower, avgrecentprice, recentstd, recentstdupper, recentstdlower
+
+def purchase(python_dict, type):
+    try:
+        buy_url = 'http://localhost:3000/api/{0}/{1}'.format(type, python_dict['currency'])
+        jsondata = json.dumps(python_dict)
+        requests.post(buy_url, json=jsondata)
+    except:
+        pass
+
 def thread_work(coin, endpoint):
     make_purchase = 0
     profitLoss = 0
     transactionCount = 0
     print("Mongo Endpoint is {0}".format(endpoint))
     while True:
-        datasource = database_setup.form_db_connection(coin, endpoint)
+        datasource = form_db_connection(coin, endpoint)
         last_price, xaxis, meanlast, stdhour, stdupper, stdlower, recentavgprice, recentstd, \
-        recentstdupper, recentstdlower = process_data.generate_statlists(datasource, QUARTHOUR)
+        recentstdupper, recentstdlower = generate_statlists(datasource, QUARTHOUR)
         print('Last recorded price', last_price[-1])
         print('Last recorded 15min lower bound ', recentstdlower)
         print('Last recorded 15min Upper bound ', recentstdupper)
@@ -36,21 +84,44 @@ def thread_work(coin, endpoint):
 
             purchase_dict = {'currency': coin, 'OrderType':'LIMIT', 'Quantity': 1.00000000, 'Rate':last_price[-1], 'TimeInEffect':'IMMEDIATE_OR_CANCEL'
                              ,'ConditionType':'NONE','Target':0}
-            buy_sell.purchase(purchase_dict,"buy")
+            purchase(purchase_dict,"buy")
 
-
-
-        elif last_price[-1] >= recentstdupper and make_purchase != 0 \
-                and last_price[-1] > (make_purchase * 0.0025): #bittrex trade fee = 0.0025
+        elif last_price[-1] >= recentstdupper and make_purchase != 0 and last_price[-1] > (make_purchase * 1.0025): #bittrex trade fee = 0.0025
             print("Making a sell")
-            profitLoss += (recentstdupper - (1.0025*make_purchase))
+            profitLoss += (last_price[-1] - (1.0025*make_purchase))
             transactionCount += 1
+            client = MongoClient(endpoint)
+            db = client.franklin
+            posts = db.posts
+            post_data = {
+                'Coin': coin,
+                'Buy Price': make_purchase,
+                'Sell Price': recentstdupper,
+                'Profit': (last_price[-1] - (1.0025*make_purchase)),
+                'Transction': transactionCount
+            }
+            result = posts.insert_one(post_data)
+            print('One post: {0}'.format(result.inserted_id))
             make_purchase = 0
-        elif last_price[-1] <= make_purchase * 0.9 and make_purchase != 0:
+
+        elif last_price[-1] <= (make_purchase * 0.7) and make_purchase != 0:
             print("Making a sell")
             transactionCount += 1
             profitLoss += (last_price[-1] - (1.0025*make_purchase))
+            client = MongoClient(endpoint)
+            db = client.franklin
+            posts = db.posts
+            post_data = {
+                'Coin': coin,
+                'Buy Price': make_purchase,
+                'Sell Price': last_price[-1],
+                'Profit': profitLoss,
+                'Transction': transactionCount
+            }
+            result = posts.insert_one(post_data)
+            print('One post: {0}'.format(result.inserted_id))
             make_purchase = 0
+
         print('Current Purchase ', make_purchase)
         if make_purchase != 0:
             print('Current Sell Goal', recentstdupper)
@@ -60,6 +131,8 @@ def thread_work(coin, endpoint):
         print("Transaction Count ", transactionCount)
         print("\n\n")
         time.sleep(10)
+
+
 
 
 if __name__ == "__main__":
@@ -74,7 +147,7 @@ if __name__ == "__main__":
     else:
         endpoint = "mongodb://franklin:theSEGeswux8stat@ds241055.mlab.com:41055/franklin"
         '''
-    endpoint = "mongodb://mongo:27017/franklin"
+    endpoint = "mongodb://localhost:27017/franklin"
     for c in range(0,len(coins)):
         t = mythread(coins[c] , endpoint)
         t.setDaemon(True)
