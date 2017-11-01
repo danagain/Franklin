@@ -60,9 +60,10 @@ def generate_statlists(datasource, quart_hour):
 def make_purchase(python_dict, ptype):
     """Fill this in later"""
     try:
-        buy_url = 'http://localhost:3000/api/{0}/{1}'.format(ptype, python_dict['currency'])
+        buy_url = 'http://web-api:3000/api/{0}/{1}'.format(ptype, python_dict['currency'])
         jsondata = json.dumps(python_dict)
-        requests.post(buy_url, json=jsondata)
+        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+        requests.post(buy_url, data=jsondata, headers=headers)
     except requests.exceptions.RequestException as error:
         print(error)
         sys.exit(1)
@@ -161,7 +162,7 @@ if __name__ == "__main__":
     else:
         endpoint = "mongodb://franklin:theSEGeswux8stat@ds241055.mlab.com:41055/franklin"
         '''
-    ENDPOINT = "mongodb://localhost:27017/franklin"
+    ENDPOINT = "mongodb://mongo:27017/franklin"
     for c in range(0, len(COINS)):
         t = MyThread(COINS[c])
         t.setDaemon(True)

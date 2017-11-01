@@ -4,8 +4,8 @@ services:
     build: ./streamer
     links:
       - mongo
-  ml:
-    build: ./ML
+  hunter:
+    build: ./hunter
     links:
       - mongo
   web:

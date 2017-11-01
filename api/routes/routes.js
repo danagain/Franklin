@@ -32,7 +32,8 @@ const routes = () => {
         } );
     router.route( "/api/buy/:currency" )
         .post( (req, res) => {
-            res.json(`This was the POST: ${req.body}`)
+            console.log(req.body)
+            console.log("Purchased!")
             // bittrex.tradebuy({
             //     MarketName: req.params.currency,
             //     OrderType: req.body.OrderType,
@@ -48,7 +49,8 @@ const routes = () => {
         } );
     router.route( "/api/sell/:currency" )
         .post( (req, res) => {
-            res.json(`This was the POST: ${req.body}`)
+            console.log(req.body)
+            console.log('Selling!')
             // bittrex.tradesell({
             //     MarketName: req.params.currency,
             //     OrderType: req.body.OrderType,
