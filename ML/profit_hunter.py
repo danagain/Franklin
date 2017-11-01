@@ -65,7 +65,7 @@ def purchase(python_dict, type):
         pass
 
 def thread_work(coin, endpoint):
-    make_purchase = 0
+    purchase = 0
     profitLoss = 0
     transactionCount = 0
     print("Mongo Endpoint is {0}".format(endpoint))
@@ -78,52 +78,56 @@ def thread_work(coin, endpoint):
         print('Last recorded 15min Upper bound ', recentstdupper)
 
         # If the current price has fallen below our threshold, it's time to buy
-        if last_price[-1] < recentstdlower and make_purchase == 0:
+        if last_price[-1] < recentstdlower and purchase == 0:
             print("Making a purchase")
-            make_purchase = last_price[-1]
+            purchase = last_price[-1]
 
             purchase_dict = {'currency': coin, 'OrderType':'LIMIT', 'Quantity': 1.00000000, 'Rate':last_price[-1], 'TimeInEffect':'IMMEDIATE_OR_CANCEL'
                              ,'ConditionType':'NONE','Target':0}
             purchase(purchase_dict,"buy")
 
-        elif last_price[-1] >= recentstdupper and make_purchase != 0 and last_price[-1] > (make_purchase * 1.0025): #bittrex trade fee = 0.0025
+        elif last_price[-1] >= recentstdupper and purchase != 0 and last_price[-1] > (purchase * 1.003): #bittrex trade fee = 0.0025
+            sell = last_price[-1]
             print("Making a sell")
-            profitLoss += (last_price[-1] - (1.0025*make_purchase))
+            profitLoss += (sell - (1.0025*purchase))
             transactionCount += 1
             client = MongoClient(endpoint)
             db = client.franklin
             posts = db.posts
             post_data = {
                 'Coin': coin,
-                'Buy Price': make_purchase,
+                'Buy Price': purchase,
                 'Sell Price': recentstdupper,
-                'Profit': (last_price[-1] - (1.0025*make_purchase)),
+                'Transaction Profit': (sell - (1.0025*purchase)),
+                'Total Transaction Profit / Loss': profitLoss,
                 'Transction': transactionCount
             }
             result = posts.insert_one(post_data)
             print('One post: {0}'.format(result.inserted_id))
-            make_purchase = 0
+            purchase = 0
 
-        elif last_price[-1] <= (make_purchase * 0.7) and make_purchase != 0:
+        elif last_price[-1] <= (purchase * 0.7) and purchase != 0:
+            sell = last_price[-1]
             print("Making a sell")
             transactionCount += 1
-            profitLoss += (last_price[-1] - (1.0025*make_purchase))
+            profitLoss += (sell - (1.0025*purchase))
             client = MongoClient(endpoint)
             db = client.franklin
             posts = db.posts
             post_data = {
                 'Coin': coin,
-                'Buy Price': make_purchase,
+                'Buy Price': purchase,
                 'Sell Price': last_price[-1],
-                'Profit': profitLoss,
+                'Transaction Loss': (sell - (1.0025*purchase)),
+                'Total Transaction Profit / Loss': profitLoss,
                 'Transction': transactionCount
             }
             result = posts.insert_one(post_data)
             print('One post: {0}'.format(result.inserted_id))
-            make_purchase = 0
+            purchase = 0
 
-        print('Current Purchase ', make_purchase)
-        if make_purchase != 0:
+        print('Current Purchase ', purchase)
+        if purchase != 0:
             print('Current Sell Goal', recentstdupper)
         else:
             print('Current Sell Goal', 0)
