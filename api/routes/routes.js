@@ -1,18 +1,14 @@
 const express = require( "express" );
 const bittrex = require("node-bittrex-api");
+const mongoClient = require('mongodb').MongoClient
+const mongoController = require('../controllers/mongo')
 
-let connectionString;
-if (process.env.APP_ENV === 'docker') {
-  connectionString = "mongodb://mongo:27017/franklin";
-} else {
-  connectionString =
-    "mongodb://franklin:theSEGeswux8stat@ds241055.mlab.com:41055/franklin";
-}
+const mongoUrl = process.env.MONGO;
 
 // change this to env vars later
 bittrex.options({
-    apikey: "1b64d15bace644849152c9e42f7091bc",
-    apisecret: "5d392d3589004bf9988b72f10022c509"
+    apikey: process.env.BIT_API_KEY,
+    apisecret: process.env.BIT_API_SECRET
 });
 
 const routes = () => {
@@ -45,8 +41,18 @@ const routes = () => {
             //   }, ( data, err ) => {
             //     res.json( data );
             //   });
-
-        } );
+            mongoClient.connect(mongoUrl, (err, db) => {
+                const collection = db.collection(`buy-${req.params.currency}`)
+                mongoController.insertDocuments(collection, req.body)
+                    .then(db.close())
+                    .then((data) => {
+                        res.send(data)
+                    })
+                    .catch((err) => {
+                        throw err
+                    })
+              });
+        });
     router.route( "/api/sell/:currency" )
         .post( (req, res) => {
             console.log(req.body)
@@ -62,6 +68,17 @@ const routes = () => {
             //   }, ( data, err ) => {
             //     res.json( data );
             //   });
+            mongoClient.connect(mongoUrl, (err, db) => {
+                const collection = db.collection(`sell-${req.params.currency}`)
+                mongoController.insertDocuments(collection, req.body)
+                    .then(db.close())
+                    .then((data) => {
+                        res.send(data)
+                    })
+                    .catch((err) => {
+                        throw err
+                    })
+              });
         } );
 
     return router;
