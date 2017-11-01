@@ -24,40 +24,27 @@ setInterval(() => {
   });
 
   const insertDocuments = (db, callback) => {
-    const ethcollection = db.collection("ethereum");
-    const bitcoincollection = db.collection("bitcoin");
-    const neocollection = db.collection("neo");
-    const ltccollection = db.collection("ltc");
-
     bittrex.getmarketsummaries((data, err) => {
-      if (err) {
-        throw err;
-      }
-      const btcEth = data.result.filter(item => {
-        return item.MarketName === "BTC-ETH";
-      });
-      const usdBtc = data.result.filter(item => {
-        return item.MarketName === "USDT-BTC";
-      });
-      const btcNeo = data.result.filter(item => {
-        return item.MarketName === "BTC-NEO";
-      });
-      const btcLtc = data.result.filter(item => {
-        return item.MarketName === "BTC-LTC";
-      });
+      if (err) { throw err }
+      // The markets we're interested in
+      const marketName = ["BTC-ETH", "USDT-BTC", "BTC-NEO", "BTC-LTC"];
 
-      bitcoincollection.insertMany(usdBtc, (err, result) => {
-        callback(result);
-      });
-      neocollection.insertMany(btcNeo, (err, result) => {
-        callback(result);
-      });
-      ltccollection.insertMany(btcLtc, (err, result) => {
-        callback(result);
-      });
-      ethcollection.insertMany(btcEth, (err, result) => {
-        callback(result);
-      });
+      // Return array of market information for the above names
+      const marketArray = data.result.filter((obj) => {
+            if(marketName.indexOf(obj.MarketName) === -1) {
+              return false;
+            }
+            return true;
+          });
+
+      // map the markets and insert into their specific mongo collection
+      marketArray.map((item) => {
+        const collection = db.collection(item.MarketName);
+        collection.insertMany([item], (err, result) => {
+          if (err) { throw err }
+          callback(result);
+        });
+      })
     });
   };
 }, interval);
