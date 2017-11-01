@@ -5,7 +5,6 @@ const mongoController = require('../controllers/mongo')
 
 const mongoUrl = process.env.MONGO;
 
-// change this to env vars later
 bittrex.options({
     apikey: process.env.BIT_API_KEY,
     apisecret: process.env.BIT_API_SECRET

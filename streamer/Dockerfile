@@ -6,6 +6,4 @@ COPY . .
 
 RUN npm install
 
-ENV APP_ENV=docker
-
 CMD [ "npm", "start" ]

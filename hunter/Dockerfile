@@ -4,8 +4,6 @@ WORKDIR /var/app
 
 COPY . .
 
-ENV APP_ENV=docker
-
 RUN pip install -r requirements.txt
 
 CMD ["python","-u","profit_hunter.py"]

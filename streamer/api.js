@@ -1,14 +1,12 @@
 const bittrex = require("node-bittrex-api");
 const MongoClient = require("mongodb").MongoClient;
 
-// Check to see if running inside a container. If so assume local development, else prod.
-let connectionString;
-if (process.env.APP_ENV === 'docker') {
-  connectionString = "mongodb://mongo:27017/franklin";
-} else {
-  connectionString =
-    "mongodb://franklin:theSEGeswux8stat@ds241055.mlab.com:41055/franklin";
-}
+const mongoUrl = process.env.MONGO;
+
+bittrex.options({
+    apikey: process.env.BIT_API_KEY,
+    apisecret: process.env.BIT_API_SECRET
+});
 
 // 10 Second interval
 const interval = 10 * 1000;
@@ -16,14 +14,8 @@ const interval = 10 * 1000;
 setInterval(() => {
   console.log("Complete => Running in 10 seconds");
 
-  // change this to env vars later
-  bittrex.options({
-    apikey: "1b64d15bace644849152c9e42f7091bc",
-    apisecret: "5d392d3589004bf9988b72f10022c509"
-  });
-
   // Use connect method to connect to the Server
-  MongoClient.connect(connectionString, (err, db) => {
+  MongoClient.connect(mongoUrl, (err, db) => {
     console.log("Connected correctly to server");
 
     insertDocuments(db, () => {
