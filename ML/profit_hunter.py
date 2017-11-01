@@ -43,8 +43,10 @@ def generate_statlists(datasource, quart_hour):
     stdhour = []
     stdupper = []
     stdlower = []
+    #print("Checking DB data count, then generating statistics ")
+    #print(datasource.count())
     while datasource.count() < (15*6):
-        print("LOW DATA")
+        print("Waiting for 15 mins of data .. going to sleep for 30 seconds")
         time.sleep(30)
 
     for doc in datasource.find():  # Iterate stored documents
@@ -84,7 +86,7 @@ def thread_work(coin, endpoint):
 
             purchase_dict = {'currency': coin, 'OrderType':'LIMIT', 'Quantity': 1.00000000, 'Rate':last_price[-1], 'TimeInEffect':'IMMEDIATE_OR_CANCEL'
                              ,'ConditionType':'NONE','Target':0}
-            purchase(purchase_dict,"buy")
+            #purchase(purchase_dict,"buy")
 
         elif last_price[-1] >= recentstdupper and purchase != 0 and last_price[-1] > (purchase * 1.003): #bittrex trade fee = 0.0025
             sell = last_price[-1]
@@ -140,6 +142,8 @@ def thread_work(coin, endpoint):
 
 
 if __name__ == "__main__":
+    print("Sleeping for 20 seconds - waiting for data to be Mongo")
+    time.sleep(20)
     threads = []
     coins = {0:"BTC-ETH", 1:"USDT-BTC", 2:"BTC-LTC", 3:"BTC-NEO"}
     '''
@@ -151,7 +155,7 @@ if __name__ == "__main__":
     else:
         endpoint = "mongodb://franklin:theSEGeswux8stat@ds241055.mlab.com:41055/franklin"
         '''
-    endpoint = "mongodb://localhost:27017/franklin"
+    endpoint = "mongodb://mongo:27017/franklin"
     for c in range(0,len(coins)):
         t = mythread(coins[c] , endpoint)
         t.setDaemon(True)
