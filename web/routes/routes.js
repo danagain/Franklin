@@ -19,7 +19,12 @@ const routes = () => {
         .get( ( req, res ) => {
             res.render( "predictions" );
         } );
-    
+
+    router.route( "/chart" )
+    .get( ( req, res ) => {
+        res.render( "chart" );
+    } );
+
     return router;
 };
 

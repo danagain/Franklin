@@ -27,18 +27,8 @@ def form_db_connection(coin):
     """Fill this in later"""
     client = MongoClient(ENDPOINT)
     data_base = client.franklin
-    if coin == "USDT-BTC":
-        data_source = data_base['USDT-BTC']
-        return data_source
-    if coin == "BTC-LTC":
-        data_source = data_base['BTC-LTC']
-        return data_source
-    if coin == "BTC-NEO":
-        data_source = data_base['BTC-NEO']
-        return data_source
-    if coin == "BTC-ETH":
-        data_source = data_base['BTC-ETH']
-        return data_source
+    data_source = data_base['{0}'.format(coin)]
+    return data_source
 
 
 def generate_statlists(datasource, quart_hour):
@@ -56,17 +46,16 @@ def generate_statlists(datasource, quart_hour):
     return last_price, recentstdupper, recentstdlower
 
 
-def make_purchase(python_dict, ptype):
+def http_request(python_dict, ptype):
     """Fill this in later"""
     try:
-        buy_url = 'http://web-api:3000/api/{0}/{1}'.format(ptype, python_dict['currency'])
+        endpoint_url = 'http://web-api:3000/api/{0}/{1}'.format(ptype, python_dict['currency'])
         jsondata = json.dumps(python_dict)
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-        requests.post(buy_url, data=jsondata, headers=headers)
+        requests.post(endpoint_url, data=jsondata, headers=headers)
     except requests.exceptions.RequestException as error:
         print(error)
         sys.exit(1)
-
 
 def thread_work(coin):
     """Fill this in later"""
@@ -78,6 +67,10 @@ def thread_work(coin):
         datasource = form_db_connection(coin)
         last_price, stdupper,\
         stdlower = generate_statlists(datasource, QUARTHOUR)
+
+        timestamp = int(time.time())
+        last_dict = {'currency': coin, 'timestamp': timestamp, 'last': last_price[-1]}
+        http_request(last_dict, "last")
         print('Last recorded price', last_price[-1])
         print('Last recorded 15min lower bound ', stdlower)
         print('Last recorded 15min Upper bound ', stdupper)
@@ -88,10 +81,11 @@ def thread_work(coin):
             print("Making a purchase")
             purchase = last_price[-1]
             purchase_dict = {'currency': coin, 'OrderType':'LIMIT',
-                             'Quantity': 1.00000000, 'Rate':last_price[-1],\
-                             'TimeInEffect':'IMMEDIATE_OR_CANCEL', \
-                             'ConditionType': 'NONE', 'Target': 0}
-            make_purchase(purchase_dict, "buy")
+                    'Quantity': 1.00000000, 'Rate':last_price[-1],\
+                    'TimeInEffect':'IMMEDIATE_OR_CANCEL', \
+                    'ConditionType': 'NONE', 'Target': 0}
+
+            http_request(purchase_dict, "buy")
 
         elif last_price[-1] >= stdupper and purchase != 0 \
                 and last_price[-1] > (purchase * 1.003):

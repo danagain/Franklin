@@ -1,3 +1,4 @@
+#!/usr/bin/bash
 declare -a arr=("BTC-ETH" "BTC-LTC" "BTC-NEO" "USDT-BTC")
 
 for i in "${arr[@]}"
