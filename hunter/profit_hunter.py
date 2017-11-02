@@ -26,20 +26,18 @@ class MyThread(threading.Thread):
 def form_db_connection(coin):
     """Fill this in later"""
     client = MongoClient(ENDPOINT)
-    data_base = client.franklin  # Access the franklin database
-    # This is not a very elegent solution
-    # but I don't know how to pass the data_base coin as a parameter
+    data_base = client.franklin
     if coin == "USDT-BTC":
-        data_source = data_base.bitcoin
+        data_source = data_base['USDT-BTC']
         return data_source
     if coin == "BTC-LTC":
-        data_source = data_base.ltc
+        data_source = data_base['BTC-LTC']
         return data_source
     if coin == "BTC-NEO":
-        data_source = data_base.neo
+        data_source = data_base['BTC-NEO']
         return data_source
     if coin == "BTC-ETH":
-        data_source = data_base.ethereum
+        data_source = data_base['BTC-ETH']
         return data_source
 
 
@@ -122,8 +120,6 @@ def thread_work(coin):
 
 
 if __name__ == "__main__":
-    print("Sleeping for 20 seconds - waiting for data to be Mongo")
-    time.sleep(20)
     THREADS = []
     COINS = {0: "BTC-ETH", 1: "USDT-BTC", 2: "BTC-LTC", 3: "BTC-NEO"}
     ENDPOINT = os.environ['MONGO']

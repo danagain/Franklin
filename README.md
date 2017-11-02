@@ -9,6 +9,7 @@ Table of contents
     * [Web Interface](#webinterface)
   * [Tests](#tests)
   * [Dependencies](#dependencies)
+  * [Database Export/Import](#database-export-import)
 
 
 ## Overview
@@ -60,3 +61,10 @@ For Javascript components => `npm test`
 
 ## Dependencies
 See `requirements.txt` for Python Components and Package.json for Javascript components.
+
+## Database Export/Import
+The below assumes you are working with this project in its default `docker-compose` environment.
+
+The ability to import and export bulk CSV files into the database is available. If you wish to export the currently running MongoDB Database into CSV files simply run the `mongo_export.sh` script within the *scripts* folder. This will export a CSV file for each collection in MongoDB and place them in the *imports* folder within the *scripts* directory.
+
+You can also Import CSV files into MongoDB by placing the CSV files you wish to import into the *imports* folder and running the `import_mongo_data.py` file. This will take each of the CSV files within the imports folder and import them into their own collection.
