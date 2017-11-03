@@ -10,6 +10,22 @@ import numpy as np
 
 
 QUARTHOUR = 15 * 4 # Constant representing the data points per hour (15s intervals)
+LAST_PRICE_BTC = 0
+UPPER_BOUND_BTC = 0
+LOWER_BOUND_BTC = 0
+
+LAST_PRICE_LTC = 0
+UPPER_BOUND_LTC = 0
+LOWER_BOUND_LTC = 0
+
+LAST_PRICE_NEO = 0
+UPPER_BOUND_NEO = 0
+LOWER_BOUND_NEO= 0
+
+LAST_PRICE_ETH = 0
+UPPER_BOUND_ETH = 0
+LOWER_BOUND_ETH = 0
+
 
 
 class MyThread(threading.Thread):
@@ -30,8 +46,38 @@ def form_db_connection(coin):
     data_source = data_base['{0}'.format(coin)]
     return data_source
 
+def update_globals(coin, last, upper, lower):
+    """Fill this in later"""
+    if coin == "BTC-ETH":
+        global LAST_PRICE_ETH
+        LAST_PRICE_ETH = last
+        global UPPER_BOUND_ETH
+        UPPER_BOUND_ETH = upper
+        global LOWER_BOUND_ETH
+        LOWER_BOUND_ETH = lower
+    if coin == "USDT-BTC":
+        global LAST_PRICE_BTC
+        LAST_PRICE_BTC = last
+        global UPPER_BOUND_BTC
+        UPPER_BOUND_BTC = upper
+        global LOWER_BOUND_BTC
+        LOWER_BOUND_BTC = lower
+    if coin == "BTC-LTC":
+        global LAST_PRICE_LTC
+        LAST_PRICE_LTC = last
+        global UPPER_BOUND_LTC
+        UPPER_BOUND_LTC = upper
+        global LOWER_BOUND_LTC
+        LOWER_BOUND_LTC = lower
+    if coin == "BTC-NEO":
+        global LAST_PRICE_NEO
+        LAST_PRICE_NEO = last
+        global UPPER_BOUND_NEO
+        UPPER_BOUND_NEO = upper
+        global LOWER_BOUND_NEO
+        LOWER_BOUND_NEO = lower
 
-def generate_statlists(datasource, quart_hour):
+def generate_statlists(datasource, quart_hour, coin):
     """Fill this in later"""
     last_price = []
     while datasource.count() < (15*6):
@@ -43,6 +89,7 @@ def generate_statlists(datasource, quart_hour):
     recentstd = np.std(last_price[len(last_price) - (quart_hour):-1])
     recentstdupper = avgrecentprice + 2*(recentstd/2)
     recentstdlower = avgrecentprice - 2*(recentstd/2)
+    update_globals(coin, last_price[-1], recentstdupper, recentstdlower)
     return last_price, recentstdupper, recentstdlower
 
 
@@ -66,7 +113,7 @@ def thread_work(coin):
     while True:
         datasource = form_db_connection(coin)
         last_price, stdupper,\
-        stdlower = generate_statlists(datasource, QUARTHOUR)
+        stdlower = generate_statlists(datasource, QUARTHOUR, coin)
 
         print('Last recorded price', last_price[-1])
         print('Last recorded 15min lower bound ', stdlower)
@@ -114,11 +161,21 @@ if __name__ == "__main__":
     THREADS = []
     COINS = {0: "BTC-ETH", 1: "USDT-BTC", 2: "BTC-LTC", 3: "BTC-NEO"}
     ENDPOINT = os.environ['MONGO']
+
     for c in range(0, len(COINS)):
         t = MyThread(COINS[c])
         t.setDaemon(True)
         THREADS.append(t)
     for i in range(0, len(COINS)):
         THREADS[i].start()
+    print("Wait 20 seconds for Mongo to fire up")
+    time.sleep(20)
     while threading.active_count() > 0:
-        time.sleep(0.1)
+        '''
+        Here we create a function to either call API or insert values into MONGO
+        '''
+        print(LAST_PRICE_NEO)
+        print(LAST_PRICE_BTC)
+        print(LAST_PRICE_LTC)
+        print(LAST_PRICE_ETH)
+        time.sleep(10)
