@@ -91,6 +91,24 @@ const routes = () => {
     });
   });
 
+
+  router.route("/api/hunterdata/:currency").post((req, res, next) => {
+    console.log(req.body);
+    console.log("Storing Upper, Lower and Last values as seen by hunter!");
+    mongoClient.connect(mongoUrl, (err, db) => {
+      const collection = db.collection(`hunter-${req.params.currency}`);
+      mongoController.insertDocuments(collection, req.body)
+        .then(db.close())
+        .then(data => {
+          res.send(data);
+        })
+        .catch(err => {
+          res.status(500).json([{error: err}]);
+          res.end()
+        });
+    });
+  });
+
   return router;
 };
 

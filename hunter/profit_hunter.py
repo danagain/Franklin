@@ -104,6 +104,7 @@ def http_request(python_dict, ptype):
         print(error)
         sys.exit(1)
 
+
 def thread_work(coin):
     """Fill this in later"""
     purchase = 0
@@ -174,6 +175,13 @@ if __name__ == "__main__":
         '''
         Here we create a function to either call API or insert values into MONGO
         '''
+        hunter_dict = [{"currency":COINS[0], "Last":LAST_PRICE_ETH,"Upper":UPPER_BOUND_ETH, \
+        "Lower":LOWER_BOUND_ETH},{"currency":COINS[1], "Last":LAST_PRICE_BTC, "Upper":UPPER_BOUND_BTC, "Lower":LOWER_BOUND_BTC},{ \
+        "currency":COINS[2], "Last":LAST_PRICE_LTC, "Upper":UPPER_BOUND_LTC, "Lower":LOWER_BOUND_LTC \
+        },{"currency":COINS[3], "Last":LAST_PRICE_NEO, "Upper":UPPER_BOUND_NEO, "Lower":LOWER_BOUND_NEO}]
+        for i in range(4):
+            http_request(hunter_dict[i],"hunterdata")
+
         print(LAST_PRICE_NEO)
         print(LAST_PRICE_BTC)
         print(LAST_PRICE_LTC)
