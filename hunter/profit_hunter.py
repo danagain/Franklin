@@ -68,9 +68,6 @@ def thread_work(coin):
         last_price, stdupper,\
         stdlower = generate_statlists(datasource, QUARTHOUR)
 
-        timestamp = int(time.time())
-        last_dict = {'currency': coin, 'timestamp': timestamp, 'last': last_price[-1]}
-        http_request(last_dict, "last")
         print('Last recorded price', last_price[-1])
         print('Last recorded 15min lower bound ', stdlower)
         print('Last recorded 15min Upper bound ', stdupper)

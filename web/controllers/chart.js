@@ -1,65 +1,65 @@
+
+// Load Highcharts
+const Highcharts = require('js/highstock');
+const request = require('request')
+
 const seriesOptions = [],
 seriesCounter = 0,
 names = ["BTC-ETH", "USDT-BTC", "BTC-NEO", "BTC-LTC"];
 
-/**
-* Create the chart when all data is loaded
-* @returns {undefined}
-*/
-// UTC TIMESTAMP followed by value
-// [1506988800000,957.79],
-function createChart() {
+// This is how a module is loaded. Pass in Highcharts as a parameter.
+require('js/exporting')(Highcharts);
 
-Highcharts.stockChart('container', {
+// Generate the chart
+const chart = Highcharts.stockChart('container', {
 
-    rangeSelector: {
-        selected: 4
-    },
+        rangeSelector: {
+            selected: 4
+        },
 
-    yAxis: {
-        labels: {
-            formatter: function () {
-                return (this.value > 0 ? ' + ' : '') + this.value + '%';
+        yAxis: {
+            labels: {
+                formatter: function () {
+                    return (this.value > 0 ? ' + ' : '') + this.value + '%';
+                }
+            },
+            plotLines: [{
+                value: 0,
+                width: 2,
+                color: 'silver'
+            }]
+        },
+
+        plotOptions: {
+            series: {
+                compare: 'percent',
+                showInNavigator: true
             }
         },
-        plotLines: [{
-            value: 0,
-            width: 2,
-            color: 'silver'
-        }]
-    },
 
-    plotOptions: {
-        series: {
-            compare: 'percent',
-            showInNavigator: true
+        tooltip: {
+            pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> ({point.change}%)<br/>',
+            valueDecimals: 2,
+            split: true
+        },
+
+        series: seriesOptions
+    });
+
+
+names.map((item) => {
+    request.get('http://web-api:3000/api/info/' + name.toLowerCase(), (req, res, err) => {
+        if (err) console.log(data)
+        console.log(data)
+        seriesOptions = {
+            name: data.name,
+            data: data.data
+        };
+        seriesCounter += 1;
+
+        if (seriesCounter === names.length) {
+            createChart();
         }
-    },
+    })
+})
 
-    tooltip: {
-        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> ({point.change}%)<br/>',
-        valueDecimals: 2,
-        split: true
-    },
-
-    series: seriesOptions
-});
-}
-
-$.each(names, function(i, name) {
-
-$.getJSON('http://localhost:3000/api/last/' + name.toLowerCase() + '-c.json&callback=?',  function(data) {
-    console.log('data')
-    console.log(data)
-    seriesOptions[i] = {
-        name: name,
-        data: data
-    };
-
-    seriesCounter += 1;
-
-    if (seriesCounter === names.length) {
-        createChart();
-    }
-});
-});

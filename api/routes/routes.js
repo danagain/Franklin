@@ -16,28 +16,10 @@ const routes = () => {
   router.route("/api").get((req, res, next) => {
     res.json([{ version: "0.0.1" }]);
   });
-  router.route("/api/last/:currency")
-    .post((req, res) => {
-      console.log(req.body);
-      if(req.body === Object && Object.keys(req.body).length === 0) {
-        res.status(404).end();
-      }
-      mongoClient.connect(mongoUrl, (err, db) => {
-        const collection = db.collection(`last-${req.params.currency}`);
-        mongoController.insertDocuments(collection, req.body)
-          .then(db.close())
-          .then(data => {
-            res.send(data);
-          })
-          .catch(err => {
-            res.status(500).json([{error: err}]);
-            res.end()
-          });
-      });
-    })
+  router.route("/api/info/:currency")
     .get((req, res, next) => {
       mongoClient.connect(mongoUrl, (err, db) => {
-        const collection = db.collection(`last-${req.params.currency}`);
+        const collection = db.collection(req.params.currency);
         mongoController.findDocuments(collection)
           .then(db.close())
           .then(data => {
