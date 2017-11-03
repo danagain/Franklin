@@ -59,7 +59,7 @@ def update_globals(coin, last, upper, lower, timestamp):
         LOWER_BOUND_ETH = lower
         global TIME_STAMP
         TIME_STAMP = timestamp
-        TIME_STAMP = TIME_STAMP.strftime("%s")
+        TIME_STAMP = TIME_STAMP.strftime("%s")+"000"
     if coin == "USDT-BTC":
         global LAST_PRICE_BTC
         LAST_PRICE_BTC = last

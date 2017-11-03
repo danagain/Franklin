@@ -120,7 +120,7 @@ const routes = () => {
           .then(data => {
             for(var x in data){
               let lastarr = [parseInt(data[x]['time']), data[x]['Last']];
-              let upperarr = [parseInt(data[x]['time']), parseFloat(data[x]['Upper'])];
+              let upperarr = [parseInt(data[x]['time']), data[x]['Upper']];
               let lowerarr = [parseInt(data[x]['time']), data[x]['Lower']];
               arr.push(lastarr);
               arr2.push(upperarr);
