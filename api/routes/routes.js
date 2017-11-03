@@ -11,7 +11,6 @@ bittrex.options({
 });
 
 const routes = () => {
-  // Create Router
   const router = express.Router();
 
   router.route("/api").get((req, res, next) => {
@@ -42,7 +41,7 @@ const routes = () => {
         mongoController.findDocuments(collection)
           .then(db.close())
           .then(data => {
-            res.json(data);
+            res.send(data);
           })
           .catch(err => {
             res.status(500).json([{error: err}]);

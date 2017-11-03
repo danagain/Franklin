@@ -12,7 +12,8 @@
   "license": "ISC",
   "dependencies": {
     "ejs": "^2.5.7",
-    "express": "^4.16.2"
+    "express": "^4.16.2",
+    "highcharts": "^6.0.2"
   },
   "devDependencies": {
     "chai-http": "^3.0.0",

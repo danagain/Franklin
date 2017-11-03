@@ -9,7 +9,7 @@ const insertDocuments = (collection, data) => {
     });
   });
 };
-const findDocuments = collection => {
+const findDocuments = (collection) => {
   return new Promise((resolve, reject) => {
     collection.find({}).toArray((err, docs) => {
       if (err) {
