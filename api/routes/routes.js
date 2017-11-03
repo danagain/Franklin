@@ -21,9 +21,9 @@ const routes = () => {
       mongoClient.connect(mongoUrl, (err, db) => {
         const collection = db.collection(req.params.currency);
         mongoController.findDocuments(collection)
-          .then(db.close())
           .then(data => {
             res.send(data);
+            db.close();
           })
           .catch(err => {
             res.status(500).json([{error: err}]);
@@ -53,9 +53,9 @@ const routes = () => {
     mongoClient.connect(mongoUrl, (err, db) => {
       const collection = db.collection(`buy-${req.params.currency}`);
       mongoController.insertDocuments(collection, req.body)
-        .then(db.close())
         .then(data => {
           res.send(data);
+          db.close();
         })
         .catch(err => {
           res.status(500).json([{error: err}]);
@@ -80,9 +80,9 @@ const routes = () => {
     mongoClient.connect(mongoUrl, (err, db) => {
       const collection = db.collection(`sell-${req.params.currency}`);
       mongoController.insertDocuments(collection, req.body)
-        .then(db.close())
         .then(data => {
           res.send(data);
+          db.close();
         })
         .catch(err => {
           res.status(500).json([{error: err}]);
@@ -98,9 +98,9 @@ const routes = () => {
     mongoClient.connect(mongoUrl, (err, db) => {
       const collection = db.collection(`hunter-${req.params.currency}`);
       mongoController.insertDocuments(collection, req.body)
-        .then(db.close())
         .then(data => {
           res.send(data);
+          db.close();
         })
         .catch(err => {
           res.status(500).json([{error: err}]);
