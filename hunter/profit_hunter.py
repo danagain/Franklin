@@ -7,9 +7,11 @@ import sys
 import requests
 from pymongo import MongoClient
 import numpy as np
+import datetime
 
-
+TIME_STAMP = 0
 QUARTHOUR = 15 * 4 # Constant representing the data points per hour (15s intervals)
+
 LAST_PRICE_BTC = 0
 UPPER_BOUND_BTC = 0
 LOWER_BOUND_BTC = 0
@@ -46,7 +48,7 @@ def form_db_connection(coin):
     data_source = data_base['{0}'.format(coin)]
     return data_source
 
-def update_globals(coin, last, upper, lower):
+def update_globals(coin, last, upper, lower, timestamp):
     """Fill this in later"""
     if coin == "BTC-ETH":
         global LAST_PRICE_ETH
@@ -55,6 +57,9 @@ def update_globals(coin, last, upper, lower):
         UPPER_BOUND_ETH = upper
         global LOWER_BOUND_ETH
         LOWER_BOUND_ETH = lower
+        global TIME_STAMP
+        TIME_STAMP = timestamp
+        TIME_STAMP = TIME_STAMP.strftime("%s")
     if coin == "USDT-BTC":
         global LAST_PRICE_BTC
         LAST_PRICE_BTC = last
@@ -80,16 +85,19 @@ def update_globals(coin, last, upper, lower):
 def generate_statlists(datasource, quart_hour, coin):
     """Fill this in later"""
     last_price = []
+    datetime_data = []
     while datasource.count() < (15*6):
         print("Waiting for 15 mins of data .. going to sleep for 30 seconds")
         time.sleep(30)
     for doc in datasource.find():  # Iterate stored documents
         last_price.append(doc['Last'])  # Store the entire collections last values in memory
+        datetime_data.append(doc['_id'].generation_time) # gotta find way to just get last collection from mongo
+    #print(datetime_data)
     avgrecentprice = np.mean(last_price[len(last_price) - quart_hour : -1])
     recentstd = np.std(last_price[len(last_price) - (quart_hour):-1])
     recentstdupper = avgrecentprice + 2*(recentstd/2)
     recentstdlower = avgrecentprice - 2*(recentstd/2)
-    update_globals(coin, last_price[-1], recentstdupper, recentstdlower)
+    update_globals(coin, last_price[-1], recentstdupper, recentstdlower, datetime_data[-1])
     return last_price, recentstdupper, recentstdlower
 
 
@@ -176,9 +184,10 @@ if __name__ == "__main__":
         Here we create a function to either call API or insert values into MONGO
         '''
         hunter_dict = [{"currency":COINS[0], "Last":LAST_PRICE_ETH,"Upper":UPPER_BOUND_ETH, \
-        "Lower":LOWER_BOUND_ETH},{"currency":COINS[1], "Last":LAST_PRICE_BTC, "Upper":UPPER_BOUND_BTC, "Lower":LOWER_BOUND_BTC},{ \
+        "Lower":LOWER_BOUND_ETH, "time":TIME_STAMP},{"currency":COINS[1], "Last":LAST_PRICE_BTC, \
+        "Upper":UPPER_BOUND_BTC, "Lower":LOWER_BOUND_BTC, "time":TIME_STAMP},{ \
         "currency":COINS[2], "Last":LAST_PRICE_LTC, "Upper":UPPER_BOUND_LTC, "Lower":LOWER_BOUND_LTC \
-        },{"currency":COINS[3], "Last":LAST_PRICE_NEO, "Upper":UPPER_BOUND_NEO, "Lower":LOWER_BOUND_NEO}]
+        , "time":TIME_STAMP},{"currency":COINS[3], "Last":LAST_PRICE_NEO, "Upper":UPPER_BOUND_NEO, "Lower":LOWER_BOUND_NEO, "time":TIME_STAMP}]
         for i in range(4):
             http_request(hunter_dict[i],"hunterdata")
 
@@ -186,4 +195,5 @@ if __name__ == "__main__":
         print(LAST_PRICE_BTC)
         print(LAST_PRICE_LTC)
         print(LAST_PRICE_ETH)
+        print(TIME_STAMP)
         time.sleep(10)

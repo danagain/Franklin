@@ -21,9 +21,9 @@ const routes = () => {
       mongoClient.connect(mongoUrl, (err, db) => {
         const collection = db.collection(req.params.currency);
         mongoController.findDocuments(collection)
-          .then(db.close())
           .then(data => {
             res.send(data);
+            db.close()
           })
           .catch(err => {
             res.status(500).json([{error: err}]);
@@ -53,9 +53,9 @@ const routes = () => {
     mongoClient.connect(mongoUrl, (err, db) => {
       const collection = db.collection(`buy-${req.params.currency}`);
       mongoController.insertDocuments(collection, req.body)
-        .then(db.close())
         .then(data => {
           res.send(data);
+          db.close()
         })
         .catch(err => {
           res.status(500).json([{error: err}]);
@@ -80,9 +80,9 @@ const routes = () => {
     mongoClient.connect(mongoUrl, (err, db) => {
       const collection = db.collection(`sell-${req.params.currency}`);
       mongoController.insertDocuments(collection, req.body)
-        .then(db.close())
         .then(data => {
           res.send(data);
+          db.close()
         })
         .catch(err => {
           res.status(500).json([{error: err}]);
@@ -98,9 +98,9 @@ const routes = () => {
     mongoClient.connect(mongoUrl, (err, db) => {
       const collection = db.collection(`hunter-${req.params.currency}`);
       mongoController.insertDocuments(collection, req.body)
-        .then(db.close())
         .then(data => {
           res.send(data);
+          db.close()
         })
         .catch(err => {
           res.status(500).json([{error: err}]);
@@ -108,6 +108,37 @@ const routes = () => {
         });
     });
   });
+  router.route("/api/graph/:currency")
+    .get((req, res, next) => {
+      mongoClient.connect(mongoUrl, (err, db) => {
+        const collection = db.collection(`hunter-${req.params.currency}`);
+        var arr = [];
+        var arr2 = [];
+        var arr3 = [];
+        var arr4 = [];
+        mongoController.findDocuments(collection)
+          .then(data => {
+            for(var x in data){
+              let lastarr = [parseInt(data[x]['time']), data[x]['Last']];
+              let upperarr = [parseInt(data[x]['time']), parseFloat(data[x]['Upper'])];
+              let lowerarr = [parseInt(data[x]['time']), data[x]['Lower']];
+              arr.push(lastarr);
+              arr2.push(upperarr);
+              arr3.push(lowerarr);
+            }
+              arr4.push(arr);
+              arr4.push(arr2);
+              arr4.push(arr3);
+
+            res.send(arr4);
+            db.close()
+          })
+          .catch(err => {
+            res.status(500).json([{error: err}]);
+            res.end()
+          });
+      });
+    });
 
   return router;
 };
