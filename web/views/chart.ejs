@@ -15,7 +15,7 @@
 <script>
 var seriesOptions = [],
     seriesCounter = 0,
-    names = ['MSFT', 'AAPL', 'GOOG'];
+    names = ['Last', 'Upper', 'Lower'];
 
 /**
  * Create the chart when all data is loaded
@@ -44,14 +44,14 @@ function createChart() {
 
         plotOptions: {
             series: {
-                compare: 'percent',
+                //compare: 'value',
                 showInNavigator: true
             }
         },
 
         tooltip: {
             pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> ({point.change}%)<br/>',
-            valueDecimals: 2,
+            valueDecimals: 8,
             split: true
         },
 
@@ -61,11 +61,11 @@ function createChart() {
 
 $.each(names, function (i, name) {
 
-    $.getJSON('https://www.highcharts.com/samples/data/jsonp.php?filename=' + name.toLowerCase() + '-c.json&callback=?',    function (data) {
+    $.getJSON("http://localhost:3000/api/graph/BTC-ETH",    function (data) {
 
         seriesOptions[i] = {
             name: name,
-            data: data
+            data: data[i]
         };
 
         // As we're loading the data asynchronously, we don't know what order it will arrive. So
