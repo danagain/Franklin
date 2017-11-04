@@ -2,6 +2,15 @@ const express = require("express");
 const bittrex = require("node-bittrex-api");
 const mongoClient = require("mongodb").MongoClient;
 const mongoController = require("../controllers/mongo");
+const SplunkLogger = require("splunk-logging").Logger;
+const loggingController = require('../controllers/logger.js')();
+
+const splunkConfig = {
+   token: process.env.SPLUNKTOKEN,
+   url: "https://splunk:8088"
+};
+
+const logger = new SplunkLogger(splunkConfig);
 
 const mongoUrl = process.env.MONGO;
 
@@ -14,16 +23,17 @@ const routes = () => {
   const router = express.Router();
 
   router.route("/api").get((req, res, next) => {
+    loggingController.log({message: { info: [{ version: "0.0.1" }], headers: req.headers, method: req.method }, severity: 'info'})
     res.json([{ version: "0.0.1" }]);
   });
   router.route("/api/balance/:currency").get((req, res) => {
     bittrex.getbalance({ currency: req.params.currency }, (data, err) => {
+      loggingController.log({message: { info: data, headers: req.headers, method: req.method }, severity: 'info'})
       res.json(data);
     });
   });
   router.route("/api/buy/:currency").post((req, res, next) => {
-    console.log(req.body);
-    console.log("Purchased!");
+    loggingController.log({message: { info: req.body, headers: req.headers, method: req.method }, severity: 'info'})
     // bittrex.tradebuy({
     //     MarketName: req.params.currency,
     //     OrderType: req.body.OrderType,
@@ -49,8 +59,7 @@ const routes = () => {
     });
   });
   router.route("/api/sell/:currency").post((req, res, next) => {
-    console.log(req.body);
-    console.log("Selling!");
+    loggingController.log({message: { info: req.body, headers: req.headers, method: req.method }, severity: 'info'})
     // bittrex.tradesell({
     //     MarketName: req.params.currency,
     //     OrderType: req.body.OrderType,
@@ -107,8 +116,7 @@ const routes = () => {
       });
     })
     .post((req, res, next) => {
-      console.log(req.body);
-      console.log("Storing Upper, Lower and Last values as seen by hunter!");
+      loggingController.log({message: { info: req.body, headers: req.headers, method: req.method }, severity: 'info'})
       mongoClient.connect(mongoUrl, (err, db) => {
         const collection = db.collection(`graph-${req.params.currency}`);
         mongoController.insertDocuments(collection, req.body)

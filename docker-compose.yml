@@ -26,8 +26,10 @@ services:
       - MONGO=mongodb://mongo:27017/franklin
       - BIT_API_KEY=1b64d15bace644849152c9e42f7091bc
       - BIT_API_SECRET=5d392d3589004bf9988b72f10022c509
+      - SPLUNKTOKEN=00000000-0000-0000-0000-000000000000
     links:
       - mongo
+      - splunk
     ports:
      - "3000:3000"
     expose:
@@ -40,12 +42,16 @@ services:
      - "27017:27017"
     expose:
      - 27017
-  elk:
-    image: sebp/elk
-    ports:
-      - "5601:5601"
-      - "9200:9200"
-      - "5044:5044"
+  splunk:
+    hostname: splunk
+    image: splunk/splunk:6.5.3-monitor
     expose:
-      - 9200
-      - 5044
+      - 8088
+    environment:
+      SPLUNK_CMD: 'add user docker -password docker -role admin -auth admin:changeme'
+      SPLUNK_START_ARGS: --accept-license
+    ports:
+      - "8000:8000"
+      - "9997:9997"
+      - "8088:8088"
+      - "1514:1514"
