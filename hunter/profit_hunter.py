@@ -13,8 +13,9 @@ import sys
 import requests
 from pymongo import MongoClient
 import numpy as np
+import datetime
 
-QUARTHOUR = 15 * 6 # Constant representing the data points per hour (5s intervals)
+QUARTHOUR = 15 * 6 # Constant representing the data points per hour
 
 class MyThread(threading.Thread):
     """
@@ -87,7 +88,11 @@ def generate_statlists(datasource, quart_hour):
     recentstd = np.std(last_price[len(last_price) - (quart_hour):-1])
     recentstdupper = avgrecentprice + 2*(recentstd/2)
     recentstdlower = avgrecentprice - 2*(recentstd/2)
-    return last_price, recentstdupper, recentstdlower, datetime_data[-1]
+    datedata = datetime_data[-1]
+    datedata = datedata.strftime("%s")+"000"
+
+    return last_price, recentstdupper, recentstdlower,\
+    datedata
 
 
 def http_request(ptype, python_dict):
@@ -152,15 +157,9 @@ def thread_work(coin):
         datasource = form_db_connection(coin)
         last_price, stdupper,\
         stdlower, time_stamp = generate_statlists(datasource, QUARTHOUR)
-
-        print('Last recorded price', last_price[-1])
-        print('Last recorded 15min lower bound ', stdlower)
-        print('Last recorded 15min Upper bound ', stdupper)
-
         # If the current price has fallen below our threshold, it's time to buy
         if last_price[-1] < stdlower and purchase == 0 and \
                         stdupper >= (last_price[-1] * 1.0025):
-            print("Making a purchase")
             purchase = last_price[-1]
             purchase_dict = {'Coin': coin, 'OrderType':'LIMIT',\
                     'Quantity': 1.00000000, 'Rate':last_price[-1],\
@@ -171,27 +170,16 @@ def thread_work(coin):
 
         elif last_price[-1] >= (1.003 * purchase) and purchase != 0:
             sell = last_price[-1]
-            print("Making a sell")
             profitloss += (sell - (1.0025 * purchase))
             trans_count += 1
             purchase = 0
 
         elif last_price[-1] <= (purchase * 0.996) and purchase != 0:
             sell = last_price[-1]
-            print("Making a sell")
             trans_count += 1
             profitloss += (sell - (1.0025*purchase))
             purchase = 0
 
-        print('Current Purchase ', purchase)
-        if purchase != 0:
-            print('Current Sell Goal', stdupper)
-        else:
-            print('Current Sell Goal', 0)
-        print("Profit / Loss ", profitloss)
-        print("Transaction Count ", trans_count)
-        print("\n\n")
-        time_stamp = time_stamp.strftime("%s")+"000"
         hunter_dict = {'Coin': coin, 'Last':last_price[-1], 'Upper':stdupper,\
          'Lower':stdlower, 'Time':time_stamp, 'Transactions':trans_count,\
          'Balance':profitloss, 'Current Buy':purchase}
@@ -200,8 +188,8 @@ def thread_work(coin):
 
 
 if __name__ == "__main__":
-    print("Wait 20 seconds for Mongo to fire up")
-    time.sleep(20)
+    print("Wait 10 seconds for Mongo to fire up")
+    time.sleep(10)
     COINS = get_coins() # Get all of the coins from the WEB-API
     # Add 15 min wait here for profit testing phase
     THREADS = []
