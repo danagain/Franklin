@@ -21,6 +21,11 @@ const routes = () => {
       res.json(data);
     });
   });
+
+  router.route("/api/coins").get((req, res, next) => {
+    res.json([{coins: ['BTC-ETH','BTC-NEO', 'BTC-LTC', 'USDT-BTC']}]);
+  });
+
   router.route("/api/buy/:currency").post((req, res, next) => {
     console.log(req.body);
     console.log("Purchased!");
