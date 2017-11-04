@@ -139,8 +139,7 @@ def thread_work(coin):
                     'ConditionType': 'NONE', 'Target': 0}
 
             http_request(purchase_dict, "buy")
-        '''
-        ** keep this for now, testing the below elif **
+
         elif last_price[-1] >= stdupper and purchase != 0 \
                 and last_price[-1] > (purchase * 1.003):
             sell = last_price[-1]
@@ -148,7 +147,7 @@ def thread_work(coin):
             profitloss += (sell - (1.0025*purchase))
             trans_count += 1
             purchase = 0
-            '''
+
         elif last_price[-1] >= (1.003 * purchase) and purchase != 0:
             sell = last_price[-1]
             print("Making a sell")
