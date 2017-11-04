@@ -10,7 +10,7 @@ import numpy as np
 import datetime
 
 TIME_STAMP = 0
-QUARTHOUR = 15 * 4 # Constant representing the data points per hour (15s intervals)
+QUARTHOUR = 15 * 6 # Constant representing the data points per hour (5s intervals)
 
 LAST_PRICE_BTC = 0
 UPPER_BOUND_BTC = 0
@@ -86,7 +86,7 @@ def generate_statlists(datasource, quart_hour, coin):
     """Fill this in later"""
     last_price = []
     datetime_data = []
-    while datasource.count() < (15*6):
+    while datasource.count() < (QUARTHOUR):
         print("Waiting for 15 mins of data .. going to sleep for 30 seconds")
         time.sleep(30)
     for doc in datasource.find():  # Iterate stored documents
@@ -130,7 +130,7 @@ def thread_work(coin):
 
         # If the current price has fallen below our threshold, it's time to buy
         if last_price[-1] < stdlower and purchase == 0 and \
-                        stdupper >= (last_price[-1] * 1.003):
+                        stdupper >= (last_price[-1] * 1.0025):
             print("Making a purchase")
             purchase = last_price[-1]
             purchase_dict = {'currency': coin, 'OrderType':'LIMIT',
@@ -139,7 +139,8 @@ def thread_work(coin):
                     'ConditionType': 'NONE', 'Target': 0}
 
             http_request(purchase_dict, "buy")
-
+        '''
+        ** keep this for now, testing the below elif **
         elif last_price[-1] >= stdupper and purchase != 0 \
                 and last_price[-1] > (purchase * 1.003):
             sell = last_price[-1]
@@ -147,8 +148,14 @@ def thread_work(coin):
             profitloss += (sell - (1.0025*purchase))
             trans_count += 1
             purchase = 0
-
-        elif last_price[-1] <= (purchase * 0.85) and purchase != 0:
+            '''
+        elif last_price[-1] >= (1.003 * purchase) and purchase != 0:
+            sell = last_price[-1]
+            print("Making a sell")
+            profitloss += (sell - (1.0025*purchase))
+            trans_count += 1
+            purchase = 0
+        elif last_price[-1] <= (purchase * 0.996) and purchase != 0:
             sell = last_price[-1]
             print("Making a sell")
             trans_count += 1
@@ -196,4 +203,4 @@ if __name__ == "__main__":
         print(LAST_PRICE_LTC)
         print(LAST_PRICE_ETH)
         print(TIME_STAMP)
-        time.sleep(10)
+        time.sleep(9)
