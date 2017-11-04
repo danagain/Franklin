@@ -1,6 +1,6 @@
 const bittrex = require("node-bittrex-api");
 const MongoClient = require("mongodb").MongoClient;
-const loggingController = require("../controllers/logger.js")();
+const loggingController = require("./controllers/logger.js")();
 
 const mongoUrl = process.env.MONGO;
 
