@@ -16,21 +16,6 @@ const routes = () => {
   router.route("/api").get((req, res, next) => {
     res.json([{ version: "0.0.1" }]);
   });
-  router.route("/api/info/:currency")
-    .get((req, res, next) => {
-      mongoClient.connect(mongoUrl, (err, db) => {
-        const collection = db.collection(req.params.currency);
-        mongoController.findDocuments(collection)
-          .then(data => {
-            res.send(data);
-            db.close();
-          })
-          .catch(err => {
-            res.status(500).json([{error: err}]);
-            res.end()
-          });
-      });
-    });
   router.route("/api/balance/:currency").get((req, res) => {
     bittrex.getbalance({ currency: req.params.currency }, (data, err) => {
       res.json(data);
@@ -90,28 +75,10 @@ const routes = () => {
         });
     });
   });
-
-
-  router.route("/api/hunterdata/:currency").post((req, res, next) => {
-    console.log(req.body);
-    console.log("Storing Upper, Lower and Last values as seen by hunter!");
-    mongoClient.connect(mongoUrl, (err, db) => {
-      const collection = db.collection(`hunter-${req.params.currency}`);
-      mongoController.insertDocuments(collection, req.body)
-        .then(data => {
-          res.send(data);
-          db.close();
-        })
-        .catch(err => {
-          res.status(500).json([{error: err}]);
-          res.end()
-        });
-    });
-  });
   router.route("/api/graph/:currency")
     .get((req, res, next) => {
       mongoClient.connect(mongoUrl, (err, db) => {
-        const collection = db.collection(`hunter-${req.params.currency}`);
+        const collection = db.collection(`graph-${req.params.currency}`);
         let arr = [];
         let arr2 = [];
         let arr3 = [];
@@ -132,6 +99,22 @@ const routes = () => {
 
             res.send(arr4);
             db.close()
+          })
+          .catch(err => {
+            res.status(500).json([{error: err}]);
+            res.end()
+          });
+      });
+    })
+    .post((req, res, next) => {
+      console.log(req.body);
+      console.log("Storing Upper, Lower and Last values as seen by hunter!");
+      mongoClient.connect(mongoUrl, (err, db) => {
+        const collection = db.collection(`graph-${req.params.currency}`);
+        mongoController.insertDocuments(collection, req.body)
+          .then(data => {
+            res.send(data);
+            db.close();
           })
           .catch(err => {
             res.status(500).json([{error: err}]);
