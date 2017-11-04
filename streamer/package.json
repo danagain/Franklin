@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "mongodb": "^2.2.33",
-    "node-bittrex-api": "^0.7.6"
+    "node-bittrex-api": "^0.7.6",
+    "splunk-logging": "^0.9.3"
   }
 }
