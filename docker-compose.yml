@@ -56,3 +56,6 @@ services:
       - "9997:9997"
       - "8088:8088"
       - "1514:1514"
+volumes:
+  opt-splunk-etc:
+  opt-splunk-var:
