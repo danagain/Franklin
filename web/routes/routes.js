@@ -21,9 +21,9 @@ const routes = () => {
         } );
 
     router.route( "/chart" )
-    .get( ( req, res ) => {
-        res.render( "chart" );
-    } );
+        .get( ( req, res ) => {
+            res.render( "chart" );
+        } );
 
 
     return router;

@@ -23,11 +23,7 @@ const routes = () => {
         mongoController.findDocuments(collection)
           .then(data => {
             res.send(data);
-<<<<<<< HEAD
             db.close();
-=======
-            db.close()
->>>>>>> 8cdbf69ec039a7d8b868985479c9f043de191f00
           })
           .catch(err => {
             res.status(500).json([{error: err}]);
@@ -59,11 +55,7 @@ const routes = () => {
       mongoController.insertDocuments(collection, req.body)
         .then(data => {
           res.send(data);
-<<<<<<< HEAD
           db.close();
-=======
-          db.close()
->>>>>>> 8cdbf69ec039a7d8b868985479c9f043de191f00
         })
         .catch(err => {
           res.status(500).json([{error: err}]);
@@ -90,11 +82,7 @@ const routes = () => {
       mongoController.insertDocuments(collection, req.body)
         .then(data => {
           res.send(data);
-<<<<<<< HEAD
           db.close();
-=======
-          db.close()
->>>>>>> 8cdbf69ec039a7d8b868985479c9f043de191f00
         })
         .catch(err => {
           res.status(500).json([{error: err}]);
@@ -112,11 +100,7 @@ const routes = () => {
       mongoController.insertDocuments(collection, req.body)
         .then(data => {
           res.send(data);
-<<<<<<< HEAD
           db.close();
-=======
-          db.close()
->>>>>>> 8cdbf69ec039a7d8b868985479c9f043de191f00
         })
         .catch(err => {
           res.status(500).json([{error: err}]);
@@ -128,10 +112,10 @@ const routes = () => {
     .get((req, res, next) => {
       mongoClient.connect(mongoUrl, (err, db) => {
         const collection = db.collection(`hunter-${req.params.currency}`);
-        var arr = [];
-        var arr2 = [];
-        var arr3 = [];
-        var arr4 = [];
+        let arr = [];
+        let arr2 = [];
+        let arr3 = [];
+        let arr4 = [];
         mongoController.findDocuments(collection)
           .then(data => {
             for(var x in data){

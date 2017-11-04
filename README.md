@@ -68,3 +68,12 @@ The below assumes you are working with this project in its default `docker-compo
 The ability to import and export bulk CSV files into the database is available. If you wish to export the currently running MongoDB Database into CSV files simply run the `mongo_export.sh` script within the *scripts* folder. This will export a CSV file for each collection in MongoDB and place them in the *imports* folder within the *scripts* directory.
 
 You can also Import CSV files into MongoDB by placing the CSV files you wish to import into the *imports* folder and running the `import_mongo_data.py` file. This will take each of the CSV files within the imports folder and import them into their own collection.
+
+
+## TO-DO
+
+* Fix sudo-code.
+* Add Hunter tests.
+* Add single command for testing all components.
+* Add in single point of entry for adding new Markets.
+* Remove all stdout and print functions.

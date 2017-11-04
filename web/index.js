@@ -12,8 +12,6 @@ app.set( "view engine", "ejs" );
 // Middleware
 app.use( express.static( "static" ) );
 
-
-
 // Routes
 app.use( "/", router );
 
