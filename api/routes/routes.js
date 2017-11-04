@@ -32,6 +32,11 @@ const routes = () => {
       res.json(data);
     });
   });
+
+  router.route("/api/coins").get((req, res, next) => {
+    res.json([{coins: ['BTC-ETH','BTC-NEO', 'BTC-LTC', 'USDT-BTC']}]);
+  });
+
   router.route("/api/buy/:currency").post((req, res, next) => {
     loggingController.log({message: { info: req.body, headers: req.headers, method: req.method }, severity: 'info'})
     // bittrex.tradebuy({

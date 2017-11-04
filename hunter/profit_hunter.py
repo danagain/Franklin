@@ -1,4 +1,10 @@
-"""Fill this in later"""
+"""
+
+Module to interact with WEB-API to locate and signal for potentially
+profitable trades. Market stocks to monitor are passed from the WEB-API
+where a thread is spawned to handle each market.
+
+"""
 import os
 import threading
 import time
@@ -9,102 +15,99 @@ from pymongo import MongoClient
 import numpy as np
 import datetime
 
-TIME_STAMP = 0
-QUARTHOUR = 15 * 6 # Constant representing the data points per hour (5s intervals)
-
-LAST_PRICE_BTC = 0
-UPPER_BOUND_BTC = 0
-LOWER_BOUND_BTC = 0
-
-LAST_PRICE_LTC = 0
-UPPER_BOUND_LTC = 0
-LOWER_BOUND_LTC = 0
-
-LAST_PRICE_NEO = 0
-UPPER_BOUND_NEO = 0
-LOWER_BOUND_NEO= 0
-
-LAST_PRICE_ETH = 0
-UPPER_BOUND_ETH = 0
-LOWER_BOUND_ETH = 0
-
-
+QUARTHOUR = 15 * 6 # Constant representing the data points per hour
 
 class MyThread(threading.Thread):
-    """Fill this in later"""
+    """
+
+    Class to handle all of the threading aspect
+
+    """
     def __init__(self, coin):
+        """
+
+        Class constructor for initialisation
+
+        @param coin: The coin/stock this thread is
+        responsible for monitoring
+
+        """
         threading.Thread.__init__(self)
         self.coin = coin
         self.endpoint = ENDPOINT
 
     def run(self):
+        """
+
+        Custom Override of the Thread Librarys run function to start the
+        thread work function
+
+        """
         thread_work(self.coin)
 
 
 def form_db_connection(coin):
-    """Fill this in later"""
+    """
+
+    Function to form a connection with the database,
+    will eventually be replaced with API call to WEB-API
+
+    @param coin: The coin/stock we want to query
+
+    """
     client = MongoClient(ENDPOINT)
     data_base = client.franklin
     data_source = data_base['{0}'.format(coin)]
     return data_source
 
-def update_globals(coin, last, upper, lower, timestamp):
-    """Fill this in later"""
-    if coin == "BTC-ETH":
-        global LAST_PRICE_ETH
-        LAST_PRICE_ETH = last
-        global UPPER_BOUND_ETH
-        UPPER_BOUND_ETH = upper
-        global LOWER_BOUND_ETH
-        LOWER_BOUND_ETH = lower
-        global TIME_STAMP
-        TIME_STAMP = timestamp
-        TIME_STAMP = TIME_STAMP.strftime("%s")+"000"
-    if coin == "USDT-BTC":
-        global LAST_PRICE_BTC
-        LAST_PRICE_BTC = last
-        global UPPER_BOUND_BTC
-        UPPER_BOUND_BTC = upper
-        global LOWER_BOUND_BTC
-        LOWER_BOUND_BTC = lower
-    if coin == "BTC-LTC":
-        global LAST_PRICE_LTC
-        LAST_PRICE_LTC = last
-        global UPPER_BOUND_LTC
-        UPPER_BOUND_LTC = upper
-        global LOWER_BOUND_LTC
-        LOWER_BOUND_LTC = lower
-    if coin == "BTC-NEO":
-        global LAST_PRICE_NEO
-        LAST_PRICE_NEO = last
-        global UPPER_BOUND_NEO
-        UPPER_BOUND_NEO = upper
-        global LOWER_BOUND_NEO
-        LOWER_BOUND_NEO = lower
 
-def generate_statlists(datasource, quart_hour, coin):
-    """Fill this in later"""
+def generate_statlists(datasource, quart_hour):
+    """
+
+    Generates the upper and lower threshold values to spot buy/sell signals
+
+    @param datasource: The mongodb database source
+    @param quart_hour: Time frame to determine the amount of data we are
+    working with
+
+    @return last_price: Array of Last values for the currency
+    @return recentstdupper: The most recent upper threshhold value
+    @return recentstdlower: The most recent lower threshhold value
+    @return datetime_data[-1]: The TimeStamp of most recent Last price
+
+    """
     last_price = []
     datetime_data = []
     while datasource.count() < (QUARTHOUR):
         print("Waiting for 15 mins of data .. going to sleep for 30 seconds")
         time.sleep(30)
     for doc in datasource.find():  # Iterate stored documents
-        last_price.append(doc['Last'])  # Store the entire collections last values in memory
-        datetime_data.append(doc['_id'].generation_time) # gotta find way to just get last collection from mongo
-    #print(datetime_data)
+        last_price.append(doc['Last'])
+        datetime_data.append(doc['_id'].generation_time)
     avgrecentprice = np.mean(last_price[len(last_price) - quart_hour : -1])
     recentstd = np.std(last_price[len(last_price) - (quart_hour):-1])
     recentstdupper = avgrecentprice + 2*(recentstd/2)
     recentstdlower = avgrecentprice - 2*(recentstd/2)
-    update_globals(coin, last_price[-1], recentstdupper, recentstdlower, datetime_data[-1])
-    return last_price, recentstdupper, recentstdlower
+    datedata = datetime_data[-1]
+    datedata = datedata.strftime("%s")+"000"
+
+    return last_price, recentstdupper, recentstdlower,\
+    datedata
 
 
-def http_request(python_dict, ptype):
-    """Fill this in later"""
+def http_request(ptype, python_dict):
+    """
+
+    This function is used to post data from the hunter to the
+    web-api
+
+    @param ptype: Specifies the post type, e.g graph, buy, sell
+    @param python_dict: Python dictionary containing data
+    sent to web-api
+
+    """
     try:
-        endpoint_url = 'http://web-api:3000/api/{0}/{1}'.format(ptype, python_dict['currency'])
+        endpoint_url = 'http://web-api:3000/api/{0}/{1}'.format(ptype, python_dict['Coin'])
         jsondata = json.dumps(python_dict)
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
         requests.post(endpoint_url, data=jsondata, headers=headers)
@@ -112,69 +115,84 @@ def http_request(python_dict, ptype):
         print(error)
         sys.exit(1)
 
+def get_coins():
+    """
+
+    This is the first function that is called as the hunter runs,
+    this function makes a call to the WEB-API to determine which stocks
+    are going to be hunted
+
+    @return data: Returns a list of coins returned from the WEB-API
+
+    """
+    try:
+        endpoint_url = 'http://web-api:3000/api/coins'
+        resp = requests.get(url=endpoint_url)
+        data = json.loads(resp.text)
+        data = data[0]["coins"]
+        if data is None:
+            print("No coins selected in API, Hunter quiting")
+            sys.exit(1)
+        else:
+            return data
+    except requests.exceptions.RequestException as error:
+        print(error)
+        sys.exit(1)
 
 def thread_work(coin):
-    """Fill this in later"""
+    """
+
+    Thread_work handles all of the work each thread must continually
+    perform whilst in a never ending loop
+
+    @param coin: The stock/coin to be monitored
+
+    """
     purchase = 0
     profitloss = 0
     trans_count = 0
+    sell = 0
     print("Mongo Endpoint is {0}".format(ENDPOINT))
     while True:
         datasource = form_db_connection(coin)
         last_price, stdupper,\
-        stdlower = generate_statlists(datasource, QUARTHOUR, coin)
-
-        print('Last recorded price', last_price[-1])
-        print('Last recorded 15min lower bound ', stdlower)
-        print('Last recorded 15min Upper bound ', stdupper)
-
+        stdlower, time_stamp = generate_statlists(datasource, QUARTHOUR)
         # If the current price has fallen below our threshold, it's time to buy
         if last_price[-1] < stdlower and purchase == 0 and \
                         stdupper >= (last_price[-1] * 1.0025):
-            print("Making a purchase")
             purchase = last_price[-1]
-            purchase_dict = {'currency': coin, 'OrderType':'LIMIT',
+            purchase_dict = {'Coin': coin, 'OrderType':'LIMIT',\
                     'Quantity': 1.00000000, 'Rate':last_price[-1],\
                     'TimeInEffect':'IMMEDIATE_OR_CANCEL', \
                     'ConditionType': 'NONE', 'Target': 0}
 
-            http_request(purchase_dict, "buy")
-
-        elif last_price[-1] >= stdupper and purchase != 0 \
-                and last_price[-1] > (purchase * 1.003):
-            sell = last_price[-1]
-            print("Making a sell")
-            profitloss += (sell - (1.0025*purchase))
-            trans_count += 1
-            purchase = 0
+            http_request("buy", purchase_dict)
 
         elif last_price[-1] >= (1.003 * purchase) and purchase != 0:
             sell = last_price[-1]
-            print("Making a sell")
-            profitloss += (sell - (1.0025*purchase))
+            profitloss += (sell - (1.0025 * purchase))
             trans_count += 1
             purchase = 0
+
         elif last_price[-1] <= (purchase * 0.996) and purchase != 0:
             sell = last_price[-1]
-            print("Making a sell")
             trans_count += 1
             profitloss += (sell - (1.0025*purchase))
             purchase = 0
 
-        print('Current Purchase ', purchase)
-        if purchase != 0:
-            print('Current Sell Goal', stdupper)
-        else:
-            print('Current Sell Goal', 0)
-        print("Profit / Loss ", profitloss)
-        print("Transaction Count ", trans_count)
-        print("\n\n")
+        hunter_dict = {'Coin': coin, 'Last':last_price[-1], 'Upper':stdupper,\
+         'Lower':stdlower, 'Time':time_stamp, 'Transactions':trans_count,\
+         'Balance':profitloss, 'Current Buy':purchase}
+        http_request("graph", hunter_dict)
         time.sleep(10)
 
 
 if __name__ == "__main__":
+    print("Wait 10 seconds for Mongo to fire up")
+    time.sleep(10)
+    COINS = get_coins() # Get all of the coins from the WEB-API
+    # Add 15 min wait here for profit testing phase
     THREADS = []
-    COINS = {0: "BTC-ETH", 1: "USDT-BTC", 2: "BTC-LTC", 3: "BTC-NEO"}
     ENDPOINT = os.environ['MONGO']
 
     for c in range(0, len(COINS)):
@@ -183,23 +201,5 @@ if __name__ == "__main__":
         THREADS.append(t)
     for i in range(0, len(COINS)):
         THREADS[i].start()
-    print("Wait 20 seconds for Mongo to fire up")
-    time.sleep(20)
     while threading.active_count() > 0:
-        '''
-        Here we create a function to either call API or insert values into MONGO
-        '''
-        hunter_dict = [{"currency":COINS[0], "Last":LAST_PRICE_ETH,"Upper":UPPER_BOUND_ETH, \
-        "Lower":LOWER_BOUND_ETH, "time":TIME_STAMP},{"currency":COINS[1], "Last":LAST_PRICE_BTC, \
-        "Upper":UPPER_BOUND_BTC, "Lower":LOWER_BOUND_BTC, "time":TIME_STAMP},{ \
-        "currency":COINS[2], "Last":LAST_PRICE_LTC, "Upper":UPPER_BOUND_LTC, "Lower":LOWER_BOUND_LTC \
-        , "time":TIME_STAMP},{"currency":COINS[3], "Last":LAST_PRICE_NEO, "Upper":UPPER_BOUND_NEO, "Lower":LOWER_BOUND_NEO, "time":TIME_STAMP}]
-        for i in range(4):
-            http_request(hunter_dict[i],"hunterdata")
-
-        print(LAST_PRICE_NEO)
-        print(LAST_PRICE_BTC)
-        print(LAST_PRICE_LTC)
-        print(LAST_PRICE_ETH)
-        print(TIME_STAMP)
         time.sleep(9)
