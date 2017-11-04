@@ -1,11 +1,19 @@
 const bittrex = require("node-bittrex-api");
 const MongoClient = require("mongodb").MongoClient;
+const loggingController = require("../controllers/logger.js")();
 
 const mongoUrl = process.env.MONGO;
 
+const splunkConfig = {
+  token: process.env.SPLUNKTOKEN,
+  url: "https://splunk:8088"
+};
+
+const logger = new SplunkLogger(splunkConfig);
+
 bittrex.options({
-    apikey: process.env.BIT_API_KEY,
-    apisecret: process.env.BIT_API_SECRET
+  apikey: process.env.BIT_API_KEY,
+  apisecret: process.env.BIT_API_SECRET
 });
 
 // 10 Second interval
@@ -25,26 +33,34 @@ setInterval(() => {
 
   const insertDocuments = (db, callback) => {
     bittrex.getmarketsummaries((data, err) => {
-      if (err) { throw err }
+      if (err) {
+        throw err;
+      }
       // The markets we're interested in
       const marketName = ["BTC-ETH", "USDT-BTC", "BTC-NEO", "BTC-LTC"];
 
       // Return array of market information for the above names
-      const marketArray = data.result.filter((obj) => {
-            if(marketName.indexOf(obj.MarketName) === -1) {
-              return false;
-            }
-            return true;
-          });
+      const marketArray = data.result.filter(obj => {
+        if (marketName.indexOf(obj.MarketName) === -1) {
+          return false;
+        }
+        return true;
+      });
 
       // map the markets and insert into their specific mongo collection
-      marketArray.map((item) => {
+      marketArray.map(item => {
+        loggingController.log({
+          message: { info: item },
+          severity: "info"
+        });
         const collection = db.collection(item.MarketName);
         collection.insertMany([item], (err, result) => {
-          if (err) { throw err }
+          if (err) {
+            throw err;
+          }
           callback(result);
         });
-      })
+      });
     });
   };
 }, interval);

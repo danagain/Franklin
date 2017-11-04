@@ -3,11 +3,11 @@ const bittrex = require("node-bittrex-api");
 const mongoClient = require("mongodb").MongoClient;
 const mongoController = require("../controllers/mongo");
 const SplunkLogger = require("splunk-logging").Logger;
-const loggingController = require('../controllers/logger.js')();
+const loggingController = require("../controllers/logger.js")();
 
 const splunkConfig = {
-   token: process.env.SPLUNKTOKEN,
-   url: "https://splunk:8088"
+  token: process.env.SPLUNKTOKEN,
+  url: "https://splunk:8088"
 };
 
 const logger = new SplunkLogger(splunkConfig);
@@ -23,22 +23,44 @@ const routes = () => {
   const router = express.Router();
 
   router.route("/api").get((req, res, next) => {
-    loggingController.log({message: { info: [{ version: "0.0.1" }], headers: req.headers, method: req.method }, severity: 'info'})
+    loggingController.log({
+      message: {
+        info: [{ version: "0.0.1" }],
+        headers: req.headers,
+        method: req.method
+      },
+      severity: "info"
+    });
     res.json([{ version: "0.0.1" }]);
   });
+
   router.route("/api/balance/:currency").get((req, res) => {
     bittrex.getbalance({ currency: req.params.currency }, (data, err) => {
-      loggingController.log({message: { info: data, headers: req.headers, method: req.method }, severity: 'info'})
+      loggingController.log({
+        message: { info: data, headers: req.headers, method: req.method },
+        severity: "info"
+      });
       res.json(data);
     });
   });
 
   router.route("/api/coins").get((req, res, next) => {
-    res.json([{coins: ['BTC-ETH','BTC-NEO', 'BTC-LTC', 'USDT-BTC']}]);
+    res.json([{ coins: ["BTC-ETH", "BTC-NEO", "BTC-LTC", "USDT-BTC"] }]);
+    loggingController.log({
+      message: {
+        info: ["BTC-ETH", "BTC-NEO", "BTC-LTC", "USDT-BTC"],
+        headers: req.headers,
+        method: req.method
+      },
+      severity: "info"
+    });
   });
 
   router.route("/api/buy/:currency").post((req, res, next) => {
-    loggingController.log({message: { info: req.body, headers: req.headers, method: req.method }, severity: 'info'})
+    loggingController.log({
+      message: { info: req.body, headers: req.headers, method: req.method },
+      severity: "info"
+    });
     // bittrex.tradebuy({
     //     MarketName: req.params.currency,
     //     OrderType: req.body.OrderType,
@@ -52,19 +74,28 @@ const routes = () => {
     //   });
     mongoClient.connect(mongoUrl, (err, db) => {
       const collection = db.collection(`buy-${req.params.currency}`);
-      mongoController.insertDocuments(collection, req.body)
+      mongoController
+        .insertDocuments(collection, req.body)
         .then(data => {
           res.send(data);
           db.close();
         })
         .catch(err => {
-          res.status(500).json([{error: err}]);
-          res.end()
+          res.status(500).json([{ error: err }]);
+          loggingController.log({
+            message: { info: err, headers: req.headers, method: req.method },
+            severity: "error"
+          });
+          res.end();
         });
     });
   });
+
   router.route("/api/sell/:currency").post((req, res, next) => {
-    loggingController.log({message: { info: req.body, headers: req.headers, method: req.method }, severity: 'info'})
+    loggingController.log({
+      message: { info: req.body, headers: req.headers, method: req.method },
+      severity: "info"
+    });
     // bittrex.tradesell({
     //     MarketName: req.params.currency,
     //     OrderType: req.body.OrderType,
@@ -78,18 +109,24 @@ const routes = () => {
     //   });
     mongoClient.connect(mongoUrl, (err, db) => {
       const collection = db.collection(`sell-${req.params.currency}`);
-      mongoController.insertDocuments(collection, req.body)
+      mongoController
+        .insertDocuments(collection, req.body)
         .then(data => {
           res.send(data);
           db.close();
         })
         .catch(err => {
-          res.status(500).json([{error: err}]);
-          res.end()
+          res.status(500).json([{ error: err }]);
+          loggingController.log({
+            message: { info: err, headers: req.headers, method: req.method },
+            severity: "error"
+          });
+          res.end();
         });
     });
   });
-  router.route("/api/graph/:currency")
+  router
+    .route("/api/graph/:currency")
     .get((req, res, next) => {
       mongoClient.connect(mongoUrl, (err, db) => {
         const collection = db.collection(`graph-${req.params.currency}`);
@@ -97,41 +134,54 @@ const routes = () => {
         let arr2 = [];
         let arr3 = [];
         let arr4 = [];
-        mongoController.findDocuments(collection)
+        mongoController
+          .findDocuments(collection)
           .then(data => {
-            for(var x in data){
-              let lastarr = [parseInt(data[x]['time']), data[x]['Last']];
-              let upperarr = [parseInt(data[x]['time']), data[x]['Upper']];
-              let lowerarr = [parseInt(data[x]['time']), data[x]['Lower']];
+            for (var x in data) {
+              let lastarr = [parseInt(data[x]["time"]), data[x]["Last"]];
+              let upperarr = [parseInt(data[x]["time"]), data[x]["Upper"]];
+              let lowerarr = [parseInt(data[x]["time"]), data[x]["Lower"]];
               arr.push(lastarr);
               arr2.push(upperarr);
               arr3.push(lowerarr);
             }
-              arr4.push(arr);
-              arr4.push(arr2);
-              arr4.push(arr3);
+            arr4.push(arr);
+            arr4.push(arr2);
+            arr4.push(arr3);
 
             res.send(arr4);
-            db.close()
+            db.close();
           })
           .catch(err => {
-            res.status(500).json([{error: err}]);
-            res.end()
+            res.status(500).json([{ error: err }]);
+            loggingController.log({
+              message: { info: err, headers: req.headers, method: req.method },
+              severity: "error"
+            });
+            res.end();
           });
       });
     })
     .post((req, res, next) => {
-      loggingController.log({message: { info: req.body, headers: req.headers, method: req.method }, severity: 'info'})
+      loggingController.log({
+        message: { info: req.body, headers: req.headers, method: req.method },
+        severity: "info"
+      });
       mongoClient.connect(mongoUrl, (err, db) => {
         const collection = db.collection(`graph-${req.params.currency}`);
-        mongoController.insertDocuments(collection, req.body)
+        mongoController
+          .insertDocuments(collection, req.body)
           .then(data => {
             res.send(data);
             db.close();
           })
           .catch(err => {
-            res.status(500).json([{error: err}]);
-            res.end()
+            res.status(500).json([{ error: err }]);
+            loggingController.log({
+              message: { info: err, headers: req.headers, method: req.method },
+              severity: "error"
+            });
+            res.end();
           });
       });
     });
