@@ -1,7 +1,4 @@
 pymongo
 numpy
-sklearn
 scipy
-matplotlib
 requests
-splunk-sdk
