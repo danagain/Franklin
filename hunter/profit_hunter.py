@@ -16,8 +16,10 @@ import numpy as np
 import datetime
 #from pyHEC import PyHEC
 import urllib.request
+import ssl
 
 QUARTHOUR = 15 * 6 # Constant representing the data points per hour
+ssl._create_default_https_context = ssl._create_unverified_context
 
 class MyThread(threading.Thread):
     """
@@ -78,7 +80,7 @@ def send_event(splunk_host, auth_token, log_data):
       source_type = "access_combined"
 
       # Create request URL
-      request_url = "http://%s:8088/services/collector" % splunk_host
+      request_url = "https://%s:8088/services/collector" % splunk_host
       print(request_url)
 
       post_data = {
