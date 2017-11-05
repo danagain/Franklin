@@ -19,12 +19,6 @@ services:
     links:
       - mongo
       - splunk
-  web:
-    build: ./web
-    links:
-      - web-api
-    ports:
-     - "5000:5000"
   web-api:
     build: ./api
     environment:

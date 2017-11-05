@@ -25,6 +25,7 @@ setInterval(() => {
     }
     bittrex.getmarketsummaries((data, err) => {
       if (err) {
+        console.log(err)
         throw err;
       }
 

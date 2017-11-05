@@ -9,30 +9,23 @@ const insertDocuments = (collection, data) => {
     });
   });
 };
-const findDocuments = collection => {
-  return new Promise((resolve, reject) => {
-    collection.find({}).toArray((err, docs) => {
-      if (err) {
-        reject(err);
-      }
-      resolve(docs);
-    });
-  });
-};
 
-const findDocs = (collection, doc_count) => {
+const findDocuments = (collection, doc_count) => {
   return new Promise((resolve, reject) => {
-    collection.find({}).sort({$natural:1}).limit(90).toArray((err, docs) => {
-      if (err) {
-        reject(err);
-      }
-      resolve(docs);
-    });
+    collection
+      .find({})
+      .sort({ $natural: 1 })
+      .limit(90)
+      .toArray((err, docs) => {
+        if (err) {
+          reject(err);
+        }
+        resolve(docs);
+      });
   });
 };
 
 module.exports = {
   insertDocuments,
-  findDocuments,
-  findDocs
+  findDocuments
 };

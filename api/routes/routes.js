@@ -2,15 +2,7 @@ const express = require("express");
 const bittrex = require("node-bittrex-api");
 const mongoClient = require("mongodb").MongoClient;
 const mongoController = require("../controllers/mongo");
-const SplunkLogger = require("splunk-logging").Logger;
 const loggingController = require("../controllers/logger.js")();
-
-const splunkConfig = {
-  token: process.env.SPLUNKTOKEN,
-  url: "https://splunk:8088"
-};
-
-const logger = new SplunkLogger(splunkConfig);
 
 const mongoUrl = process.env.MONGO;
 
@@ -34,7 +26,7 @@ const routes = () => {
 
   router.route("/api/coins").get((req, res, next) => {
     // This is where we change the coins we are working with - This is the ONLY place also :)
-    const coins = [{ coins: ["BTC-ETH", "BTC-NEO", "BTC-LTC", "USDT-BTC"] }]
+    const coins = [{ coins: ["BTC-ETH", "BTC-NEO", "BTC-LTC", "USDT-BTC"] }];
     res.json(coins);
     loggingController.log({
       message: {
@@ -116,59 +108,61 @@ const routes = () => {
     });
   });
 
-  router.route("/api/bittrex/:currency").post((req, res, next) => {
-    loggingController.log({
-      message: { info: req.body, headers: req.headers, method: req.method },
-      severity: "info"
-    });
-    // bittrex.tradebuy({
-    //     MarketName: req.params.currency,
-    //     OrderType: req.body.OrderType,
-    //     Quantity: req.body.Quantity,
-    //     Rate: req.body.Rate,
-    //     TimeInEffect: req.body.TimeInEffect, // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
-    //     ConditionType: req.body.ConditionType, // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
-    //     Target: req.body.Target, // used in conjunction with ConditionType
-    //   }, ( data, err ) => {
-    //     res.json( data );
-    //   });
-    mongoClient.connect(mongoUrl, (err, db) => {
-      const collection = db.collection(req.params.currency);
-      mongoController
-        .insertDocuments(collection, req.body)
-        .then(data => {
-          res.send(data);
-          db.close();
-        })
-        .catch(err => {
-          res.status(500).json([{ error: err }]);
-          loggingController.log({
-            message: { info: err, headers: req.headers, method: req.method },
-            severity: "error"
+  router.route("/api/bittrex/:currency")
+    .post((req, res, next) => {
+      loggingController.log({
+        message: { info: req.body, headers: req.headers, method: req.method },
+        severity: "info"
+      });
+      // bittrex.tradebuy({
+      //     MarketName: req.params.currency,
+      //     OrderType: req.body.OrderType,
+      //     Quantity: req.body.Quantity,
+      //     Rate: req.body.Rate,
+      //     TimeInEffect: req.body.TimeInEffect, // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
+      //     ConditionType: req.body.ConditionType, // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
+      //     Target: req.body.Target, // used in conjunction with ConditionType
+      //   }, ( data, err ) => {
+      //     res.json( data );
+      //   });
+      mongoClient.connect(mongoUrl, (err, db) => {
+        const collection = db.collection(req.params.currency);
+        mongoController
+          .insertDocuments(collection, req.body)
+          .then(data => {
+            res.send(data);
+            db.close();
+          })
+          .catch(err => {
+            res.status(500).json([{ error: err }]);
+            loggingController.log({
+              message: { info: err, headers: req.headers, method: req.method },
+              severity: "error"
+            });
+            res.end();
           });
-          res.end();
-        });
-    });
-  }).get((req, res) =>{
-    mongoClient.connect(mongoUrl, (err, db) => {
-      const collection = db.collection(req.params.currency);
-      const document_count = req.query.n;
-      mongoController
-        .findDocs(collection, document_count)
-        .then(data => {
-          res.send(data);
-          db.close();
-        })
-        .catch(err => {
-          res.status(500).json([{ error: err }]);
-          loggingController.log({
-            message: { info: err, headers: req.headers, method: req.method },
-            severity: "error"
+      });
+    })
+    .get((req, res) => {
+      mongoClient.connect(mongoUrl, (err, db) => {
+        const collection = db.collection(req.params.currency);
+        const documentCount = req.query.n;
+        mongoController
+          .findDocuments(collection, documentCount)
+          .then(data => {
+            res.send(data);
+            db.close();
+          })
+          .catch(err => {
+            res.status(500).json([{ error: err }]);
+            loggingController.log({
+              message: { info: err, headers: req.headers, method: req.method },
+              severity: "error"
+            });
+            res.end();
           });
-          res.end();
-        });
+      });
     });
-  });
   return router;
 };
 
