@@ -72,8 +72,14 @@ You can also Import CSV files into MongoDB by placing the CSV files you wish to 
 
 ## TO-DO
 
-* Fix sudo-code.
 * Add Hunter tests.
+* Add extensive API tests with Mock data (when x is called with y data it should 404, or should return xyz).
 * Add single command for testing all components.
-* Add in single point of entry for adding new Markets.
-* Remove all stdout and print functions.
+* Work out hosting options:
+  * AWS? (Could make new account and use free tier)
+  * Cheap LaNode option or something?
+* Estimate data storage requirements for Splunk and for MongoDB. (current 500MB limit)
+* Remove web component and its code once happy with Splunk.
+* Create new Bittrex account to use for official trades. Ensure the account has the ability to make trades.
+
+
