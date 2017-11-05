@@ -14,6 +14,7 @@ import requests
 from pymongo import MongoClient
 import numpy as np
 import datetime
+from pyHEC import PyHEC
 
 QUARTHOUR = 15 * 6 # Constant representing the data points per hour
 
@@ -95,6 +96,23 @@ def generate_statlists(datasource, quart_hour):
     datedata
 
 
+def log_data(hunter_dict):
+    """
+
+    Log data sends information to splunk for logging
+
+
+    """
+    # use your token (read how to get it here: http://blogs.splunk.com/2015/09/22/turbo-charging-modular-inputs-with-the-hec-http-event-collector-input/)
+    hec = PyHEC(os.environ['SPLUNKTOKEN'], "https://splunk") #port is handled in class constructor
+    # this is the event you want to send
+    event = hunter_dict
+    # you can select index, host, etc
+    metadata = {"index":"Main"}
+    # send the event with the metadata
+    print(hec.send(event))
+
+
 def http_request(ptype, python_dict):
     """
 
@@ -158,7 +176,7 @@ def thread_work(coin):
         last_price, stdupper,\
         stdlower, time_stamp = generate_statlists(datasource, QUARTHOUR)
         # If the current price has fallen below our threshold, it's time to buy
-        if last_price[-1] < stdlower and purchase == 0 and \
+        if last_price[-1] < (1.001*stdlower) and purchase == 0 and \
                         stdupper >= (last_price[-1] * 1.0025):
             purchase = last_price[-1]
             purchase_dict = {'Coin': coin, 'OrderType':'LIMIT',\
@@ -168,28 +186,28 @@ def thread_work(coin):
 
             http_request("buy", purchase_dict)
 
-        elif last_price[-1] >= (1.003 * purchase) and purchase != 0:
-            sell = last_price[-1]
-            profitloss += (sell - (1.0025 * purchase))
-            trans_count += 1
-            purchase = 0
+        elif last_price[-1] >= (1.004 * purchase) and purchase != 0:
+             sell = last_price[-1]
+             profitloss += (sell - (1.0025 * purchase))
+             trans_count += 1
+             purchase = 0
 
         elif last_price[-1] <= (purchase * 0.996) and purchase != 0:
-            sell = last_price[-1]
-            trans_count += 1
-            profitloss += (sell - (1.0025*purchase))
-            purchase = 0
+             sell = last_price[-1]
+             trans_count += 1
+             profitloss += (sell - (1.0025*purchase))
+             purchase = 0
 
         hunter_dict = {'Coin': coin, 'Last':last_price[-1], 'Upper':stdupper,\
          'Lower':stdlower, 'Time':time_stamp, 'Transactions':trans_count,\
          'Balance':profitloss, 'Current Buy':purchase}
-        http_request("graph", hunter_dict)
+        log_data(hunter_dict)
         time.sleep(10)
 
 
 if __name__ == "__main__":
-    print("Wait 10 seconds for Mongo to fire up")
-    time.sleep(10)
+    print("Wait 90 seconds for data")
+    time.sleep(5)
     COINS = get_coins() # Get all of the coins from the WEB-API
     # Add 15 min wait here for profit testing phase
     THREADS = []
