@@ -33,6 +33,7 @@ const routes = () => {
   });
 
   router.route("/api/coins").get((req, res, next) => {
+    // This is where we change the coins we are working with - This is the ONLY place also :)
     const coins = [{ coins: ["BTC-ETH", "BTC-NEO", "BTC-LTC", "USDT-BTC"] }]
     res.json(coins);
     loggingController.log({
