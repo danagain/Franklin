@@ -14,13 +14,18 @@ const findDocuments = (collection, doc_count) => {
   return new Promise((resolve, reject) => {
     collection
       .find({})
-      .sort({ $natural: 1 })
-      .limit(90)
       .toArray((err, docs) => {
         if (err) {
           reject(err);
         }
-        resolve(docs);
+        Array.prototype.subarray=function(start,end){
+     if(!end){ end=-1;}
+    return this.slice(start, this.length+1-(end*-1));
+      }
+      if(docs.length > doc_count){
+        docs = docs.subarray((docs.length-doc_count),-1);
+      }
+      resolve(docs);
       });
   });
 };
