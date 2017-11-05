@@ -115,6 +115,7 @@ const routes = () => {
         });
     });
   });
+
   router.route("/api/bittrex/:currency").post((req, res, next) => {
     loggingController.log({
       message: { info: req.body, headers: req.headers, method: req.method },
@@ -135,6 +136,25 @@ const routes = () => {
       const collection = db.collection(req.params.currency);
       mongoController
         .insertDocuments(collection, req.body)
+        .then(data => {
+          res.send(data);
+          db.close();
+        })
+        .catch(err => {
+          res.status(500).json([{ error: err }]);
+          loggingController.log({
+            message: { info: err, headers: req.headers, method: req.method },
+            severity: "error"
+          });
+          res.end();
+        });
+    });
+  }).get((req, res) =>{
+    mongoClient.connect(mongoUrl, (err, db) => {
+      const collection = db.collection(req.params.currency);
+      const document_count = req.query.n;
+      mongoController
+        .findDocs(collection, document_count)
         .then(data => {
           res.send(data);
           db.close();

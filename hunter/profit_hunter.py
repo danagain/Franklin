@@ -11,14 +11,11 @@ import time
 import json
 import sys
 import requests
-from pymongo import MongoClient
 import numpy as np
-import datetime
-#from pyHEC import PyHEC
 import urllib.request
 import ssl
 
-QUARTHOUR = 15 * 6 # Constant representing the data points per hour
+DATACOUNT = os.environ['DATACOUNT'] # Constant representing the data points per hour
 ssl._create_default_https_context = ssl._create_unverified_context
 
 class MyThread(threading.Thread):
@@ -38,7 +35,6 @@ class MyThread(threading.Thread):
         """
         threading.Thread.__init__(self)
         self.coin = coin
-        self.endpoint = ENDPOINT
 
     def run(self):
         """
@@ -50,27 +46,12 @@ class MyThread(threading.Thread):
         thread_work(self.coin)
 
 
-def form_db_connection(coin):
-    """
-
-    Function to form a connection with the database,
-    will eventually be replaced with API call to WEB-API
-
-    @param coin: The coin/stock we want to query
-
-    """
-    client = MongoClient(ENDPOINT)
-    data_base = client.franklin
-    data_source = data_base['{0}'.format(coin)]
-    return data_source
-
-
 def send_event(splunk_host, auth_token, log_data):
    """Sends an event to the HTTP Event collector of a Splunk Instance"""
 
    try:
       # Integer value representing epoch time format
-      event_time = 0
+     # event_time = 0
 
       # String representing the host name or IP
       host_id = "splunk"
@@ -81,10 +62,9 @@ def send_event(splunk_host, auth_token, log_data):
 
       # Create request URL
       request_url = "https://%s:8088/services/collector" % splunk_host
-      print(request_url)
 
       post_data = {
-         "time": event_time,
+        # "time": event_time,
          "host": host_id,
          "sourcetype": source_type,
          "event": log_data
@@ -92,11 +72,9 @@ def send_event(splunk_host, auth_token, log_data):
 
       # Encode data in JSON utf-8 format
       data = json.dumps(post_data).encode('utf8')
-      print(data)
 
       # Create auth header
       auth_header = "Splunk %s" % auth_token
-      print(auth_header)
       headers = {'Authorization' : auth_header}
 
       # Create request
@@ -132,56 +110,6 @@ def send_event(splunk_host, auth_token, log_data):
 
    return post_success
 
-def generate_statlists(datasource, quart_hour):
-    """
-
-    Generates the upper and lower threshold values to spot buy/sell signals
-
-    @param datasource: The mongodb database source
-    @param quart_hour: Time frame to determine the amount of data we are
-    working with
-
-    @return last_price: Array of Last values for the currency
-    @return recentstdupper: The most recent upper threshhold value
-    @return recentstdlower: The most recent lower threshhold value
-    @return datetime_data[-1]: The TimeStamp of most recent Last price
-
-    """
-    last_price = []
-    datetime_data = []
-    while datasource.count() < (1):
-        print("Waiting for 15 mins of data .. going to sleep for 30 seconds")
-        time.sleep(30)
-    for doc in datasource.find():  # Iterate stored documents
-        last_price.append(doc['Last'])
-        datetime_data.append(doc['_id'].generation_time)
-    avgrecentprice = np.mean(last_price[len(last_price) - quart_hour : -1])
-    recentstd = np.std(last_price[len(last_price) - (quart_hour):-1])
-    recentstdupper = avgrecentprice + 2*(recentstd/2)
-    recentstdlower = avgrecentprice - 2*(recentstd/2)
-    datedata = datetime_data[-1]
-    datedata = datedata.strftime("%s")+"000"
-
-    return last_price, recentstdupper, recentstdlower,\
-    datedata
-
-'''
-def log_data(hunter_dict):
-    """
-
-    Log data sends information to splunk for logging
-
-
-    """
-    # use your token (read how to get it here: http://blogs.splunk.com/2015/09/22/turbo-charging-modular-inputs-with-the-hec-http-event-collector-input/)
-    hec = PyHEC(os.environ['SPLUNKTOKEN'], "https://splunk:8000/services/collector/event") #port is handled in class constructor
-    # this is the event you want to send
-    event = hunter_dict
-    # you can select index, host, etc
-    metadata = {"index":"Main"}
-    # send the event with the metadata
-    print(hec.send(event), metadata)
-'''
 
 def http_request(ptype, python_dict):
     """
@@ -227,6 +155,33 @@ def get_coins():
         print(error)
         sys.exit(1)
 
+def get_data(coin):
+    last_price = []
+    datetime_data = []
+    try:
+        query = '?n={0}'.format(DATACOUNT)
+        endpoint_url = 'http://web-api:3000/api/bittrex/{0}/{1}'.format(coin, query)
+        resp = requests.get(url=endpoint_url)
+        data = json.loads(resp.text)
+        if data is None:
+            print("No coin data, hunter out!")
+            sys.exit(1)
+        else:
+            for doc in data:  # Iterate stored documents
+                last_price.append(doc['Last'])
+                datetime_data.append(doc['TimeStamp'])
+            avgrecentprice = np.mean(last_price[len(last_price) - int(DATACOUNT) : -1])
+            recentstd = np.std(last_price[len(last_price) - (int(DATACOUNT)):-1])
+            recentstdupper = avgrecentprice + 2*(recentstd/2)
+            recentstdlower = avgrecentprice - 2*(recentstd/2)
+            datedata = datetime_data[-1]
+
+            return last_price, recentstdupper, recentstdlower,\
+            datedata
+    except requests.exceptions.RequestException as error:
+        print(error)
+        sys.exit(1)
+
 def thread_work(coin):
     """
 
@@ -240,11 +195,9 @@ def thread_work(coin):
     profitloss = 0
     trans_count = 0
     sell = 0
-    print("Mongo Endpoint is {0}".format(ENDPOINT))
     while True:
-        datasource = form_db_connection(coin)
         last_price, stdupper,\
-        stdlower, time_stamp = generate_statlists(datasource, QUARTHOUR)
+        stdlower, time_stamp = get_data(coin)
         # If the current price has fallen below our threshold, it's time to buy
         if last_price[-1] < (1.001*stdlower) and purchase == 0 and \
                         stdupper >= (last_price[-1] * 1.0025):
@@ -271,19 +224,18 @@ def thread_work(coin):
         hunter_dict = {'Coin': coin, 'Last':last_price[-1], 'Upper':stdupper,\
          'Lower':stdlower, 'Time':time_stamp, 'Transactions':trans_count,\
          'Balance':profitloss, 'Current Buy':purchase}
-        #log_data(hunter_dict)
         token = "00000000-0000-0000-0000-000000000000"
         send_event("splunk", token, hunter_dict)
         time.sleep(10)
 
 
 if __name__ == "__main__":
-    print("Wait 90 seconds for data")
-    time.sleep(5)
+    print("Waiting for correct amount of data")
+    time_for_data = int(DATACOUNT) * 10
+    time.sleep(time_for_data)
     COINS = get_coins() # Get all of the coins from the WEB-API
     # Add 15 min wait here for profit testing phase
     THREADS = []
-    ENDPOINT = os.environ['MONGO']
 
     for c in range(0, len(COINS)):
         t = MyThread(COINS[c])

@@ -20,7 +20,19 @@ const findDocuments = collection => {
   });
 };
 
+const findDocs = (collection, doc_count) => {
+  return new Promise((resolve, reject) => {
+    collection.find({}).sort({$natural:1}).limit(90).toArray((err, docs) => {
+      if (err) {
+        reject(err);
+      }
+      resolve(docs);
+    });
+  });
+};
+
 module.exports = {
   insertDocuments,
-  findDocuments
+  findDocuments,
+  findDocs
 };
