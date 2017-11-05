@@ -8,6 +8,7 @@ December 07 2015
 
 import json
 import requests
+from requests.auth import HTTPBasicAuth
 
 class PyHEC:
 
@@ -15,7 +16,9 @@ class PyHEC:
         if not 'http' in uri:
             raise("no http or https found in hostname")
         self.token = token
-        self.uri = uri+":"+port+"/services/collector/event"
+        #self.uri = uri+":"+port+"/services/collector/event"
+        self.uri = uri
+        print("splunk url: ",uri)
         self.port = port
 
     """
@@ -30,7 +33,9 @@ class PyHEC:
 
         if metadata:
             payload.update(metadata)
-
-        r = requests.post(self.uri, data=json.dumps(payload), headers=headers, verify=True if 'https' in self.uri else False)
-
-        return r.status_code, r.text,
+        try:
+            r = requests.post(self.uri, data=json.dumps(payload), headers=headers, verify=True if 'https' in self.uri else False)
+            return r.status_code, r.text,
+        except requests.exceptions.RequestException as error:
+            print(error)
+            sys.exit(1)
