@@ -4,3 +4,4 @@ sklearn
 scipy
 matplotlib
 requests
+splunk-sdk
