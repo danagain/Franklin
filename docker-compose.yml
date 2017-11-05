@@ -15,6 +15,7 @@ services:
     build: ./hunter
     environment:
       - MONGO=mongodb://mongo:27017/franklin
+      - SPLUNKTOKEN=00000000-0000-0000-0000-000000000000
     links:
       - mongo
       - splunk
