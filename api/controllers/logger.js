@@ -1,10 +1,18 @@
 SplunkLogger = require("splunk-logging").Logger;
 
+let splunkEndpoint
+
+if (process.env.APP_ENV) {
+  splunkEndpoint = "https://splunk:8088"
+} else {
+  splunkEndpoint = "https://localhost:8088"
+}
+
 const logger = () => {
 
   const config = {
     token: process.env.SPLUNKTOKEN,
-    url: "https://splunk:8088"
+    url: splunkEndpoint
   };
 
   const Logger = new SplunkLogger(config);

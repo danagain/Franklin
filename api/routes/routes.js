@@ -4,7 +4,12 @@ const mongoClient = require("mongodb").MongoClient;
 const mongoController = require("../controllers/mongo");
 const loggingController = require("../controllers/logger.js")();
 
-const mongoUrl = process.env.MONGO;
+let mongoUrl;
+if (process.env.APP_ENV) {
+  mongoUrl = "mongodb://mongo:27017/franklin"
+} else {
+  mongoUrl = "mongodb://localhost:27017/franklin"
+}
 
 bittrex.options({
   apikey: process.env.BIT_API_KEY,
