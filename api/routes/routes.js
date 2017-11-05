@@ -146,7 +146,7 @@ const routes = () => {
     .get((req, res) => {
       mongoClient.connect(mongoUrl, (err, db) => {
         const collection = db.collection(req.params.currency);
-        const documentCount = req.query.n;
+        const documentCount = parseInt(req.query.n);
         mongoController
           .findDocuments(collection, documentCount)
           .then(data => {
