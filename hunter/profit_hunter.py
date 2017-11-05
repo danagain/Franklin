@@ -14,7 +14,8 @@ import requests
 from pymongo import MongoClient
 import numpy as np
 import datetime
-from pyHEC import PyHEC
+#from pyHEC import PyHEC
+import urllib.request
 
 QUARTHOUR = 15 * 6 # Constant representing the data points per hour
 
@@ -62,6 +63,73 @@ def form_db_connection(coin):
     return data_source
 
 
+def send_event(splunk_host, auth_token, log_data):
+   """Sends an event to the HTTP Event collector of a Splunk Instance"""
+
+   try:
+      # Integer value representing epoch time format
+      event_time = 0
+
+      # String representing the host name or IP
+      host_id = "splunk"
+
+      # String representing the Splunk sourcetype, see:
+      # docs.splunk.com/Documentation/Splunk/6.3.2/Data/Listofpretrainedsourcetypes
+      source_type = "access_combined"
+
+      # Create request URL
+      request_url = "http://%s:8088/services/collector" % splunk_host
+      print(request_url)
+
+      post_data = {
+         "time": event_time,
+         "host": host_id,
+         "sourcetype": source_type,
+         "event": log_data
+      }
+
+      # Encode data in JSON utf-8 format
+      data = json.dumps(post_data).encode('utf8')
+      print(data)
+
+      # Create auth header
+      auth_header = "Splunk %s" % auth_token
+      print(auth_header)
+      headers = {'Authorization' : auth_header}
+
+      # Create request
+      req = urllib.request.Request(request_url, data, headers)
+      response = urllib.request.urlopen(req)
+
+      # read response, should be in JSON format
+      read_response = response.read()
+
+      try:
+         response_json = json.loads(str(read_response)[2:-1])
+
+         if "text" in response_json:
+            if response_json["text"] == "Success":
+               post_success = True
+            else:
+               post_success = False
+      except:
+         post_success = False
+
+      if post_success == True:
+         # Event was recieved successfully
+         print ("Event was recieved successfully")
+      else:
+         # Event returned an error
+         print ("Error sending request.")
+
+   except Exception as err:
+      # Network or connection error
+      post_success = False
+      print ("Error sending request")
+      print (str(err))
+
+   return post_success
+
 def generate_statlists(datasource, quart_hour):
     """
 
@@ -79,7 +147,7 @@ def generate_statlists(datasource, quart_hour):
     """
     last_price = []
     datetime_data = []
-    while datasource.count() < (QUARTHOUR):
+    while datasource.count() < (1):
         print("Waiting for 15 mins of data .. going to sleep for 30 seconds")
         time.sleep(30)
     for doc in datasource.find():  # Iterate stored documents
@@ -95,7 +163,7 @@ def generate_statlists(datasource, quart_hour):
     return last_price, recentstdupper, recentstdlower,\
     datedata
 
-
+'''
 def log_data(hunter_dict):
     """
 
@@ -104,14 +172,14 @@ def log_data(hunter_dict):
 
     """
     # use your token (read how to get it here: http://blogs.splunk.com/2015/09/22/turbo-charging-modular-inputs-with-the-hec-http-event-collector-input/)
-    hec = PyHEC(os.environ['SPLUNKTOKEN'], "https://splunk") #port is handled in class constructor
+    hec = PyHEC(os.environ['SPLUNKTOKEN'], "https://splunk:8000/services/collector/event") #port is handled in class constructor
     # this is the event you want to send
     event = hunter_dict
     # you can select index, host, etc
     metadata = {"index":"Main"}
     # send the event with the metadata
-    print(hec.send(event))
-
+    print(hec.send(event), metadata)
+'''
 
 def http_request(ptype, python_dict):
     """
@@ -201,7 +269,9 @@ def thread_work(coin):
         hunter_dict = {'Coin': coin, 'Last':last_price[-1], 'Upper':stdupper,\
          'Lower':stdlower, 'Time':time_stamp, 'Transactions':trans_count,\
          'Balance':profitloss, 'Current Buy':purchase}
-        log_data(hunter_dict)
+        #log_data(hunter_dict)
+        token = "00000000-0000-0000-0000-000000000000"
+        send_event("splunk", token, hunter_dict)
         time.sleep(10)
 
 
@@ -219,5 +289,6 @@ if __name__ == "__main__":
         THREADS.append(t)
     for i in range(0, len(COINS)):
         THREADS[i].start()
+        time.sleep(2)
     while threading.active_count() > 0:
         time.sleep(9)
