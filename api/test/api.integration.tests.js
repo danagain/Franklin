@@ -63,25 +63,19 @@ expectedCoins[0].coins.forEach((item) => {
             t.end();
           });
       });
-      test(`/api/buy/${item} returns valid 200 response`, t => {
+      test(`/api/bittrex/${item}?n=2 contains valid return amount`, t => {
         request(app)
-          .post(`/api/buy/${item}`)
+          .get(`/api/bittrex/${item}?n=2`)
+          .expect("Content-Type", /json/)
           .expect(200)
           .end((err, res) => {
-            t.error(err, "No error");
-            t.end();
-          });
-      });
-      test(`/api/sell/${item} returns valid 200 response`, t => {
-        request(app)
-          .post(`/api/sell/${item}`)
-          .expect(200)
-          .end((err, res) => {
-            t.error(err, "No error");
-            t.end();
-          });
-      });
+            const sampleData = res.body
 
+            t.same(sampleData.length, 2, `value return amount for query string ${item}`);
+            t.error(err, "No error");
+            t.end();
+          });
+      });
 })
 
 // Close the server
