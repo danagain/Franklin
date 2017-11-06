@@ -15,9 +15,9 @@ import numpy as np
 import urllib.request
 import ssl
 
-TIMEINTERVAL = int(os.environ['TIMEINTERVAL'])
+LOOP_SECONDS = int(os.environ['LOOP_SECONDS'])
 COLLECTION_MINUTES = int(os.environ['COLLECTION_MINUTES'])
-DATACOUNT = COLLECTION_MINUTES * (60/TIMEINTERVAL)
+DATACOUNT = COLLECTION_MINUTES * (60/LOOP_SECONDS)
 ssl._create_default_https_context = ssl._create_unverified_context
 
 class MyThread(threading.Thread):
@@ -229,7 +229,7 @@ def thread_work(coin):
         print(hunter_dict)
         token = os.environ['SPLUNKTOKEN']
         send_event("splunk", token, hunter_dict)
-        time.sleep(TIMEINTERVAL)
+        time.sleep(LOOP_SECONDS)
 
 
 if __name__ == "__main__":
