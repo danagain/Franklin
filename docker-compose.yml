@@ -8,6 +8,7 @@ services:
       - BIT_API_SECRET=5d392d3589004bf9988b72f10022c509
       - SPLUNKTOKEN=00000000-0000-0000-0000-000000000000
       - APP_ENV=docker
+      - TIMEINTERVAL=10
     links:
       - mongo
       - splunk
