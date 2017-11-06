@@ -46,6 +46,7 @@ test("/api/coins be valid", t => {
     });
 });
 
+// Foreach of the Coins - Test endpoints with parameters
 expectedCoins[0].coins.forEach((item) => {
     test(`/api/bittrex/${item} contains valid data`, t => {
         request(app)
