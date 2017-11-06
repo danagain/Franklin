@@ -73,6 +73,7 @@ const routes = () => {
             message: { info: err, headers: req.headers, method: req.method },
             severity: "error"
           });
+          db.close();
           res.end();
         });
     });
@@ -144,6 +145,7 @@ const routes = () => {
               message: { info: err, headers: req.headers, method: req.method },
               severity: "error"
             });
+            db.close();
             res.end();
           });
       });
@@ -165,6 +167,7 @@ const routes = () => {
               message: { info: err, headers: req.headers, method: req.method },
               severity: "error"
             });
+            db.close();
             res.end();
           });
       });

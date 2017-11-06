@@ -2,6 +2,8 @@ const request = require("supertest");
 const test = require("tape");
 const app = require("../api");
 
+console.log("Running Integration Tests, Ensure Docker-Compose env is up and running.")
+
 const expectedCoins = [
     { coins: ["BTC-ETH", "BTC-NEO", "BTC-LTC", "USDT-BTC"] }
   ];

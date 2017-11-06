@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node api.js",
     "lint": "eslint index.js routes/*.js test/*.js",
-    "test": "MONGO=mongodb://mongo:27017/franklin BIT_API_KEY=1b64d15bace644849152c9e42f7091bc BIT_API_SECRET=5d392d3589004bf9988b72f10022c509 SPLUNKTOKEN=00000000-0000-0000-0000-000000000000 node ./test/api.tests.js | tap-spec"
+    "test": "docker-compose build && docker-compose up -d && sleep 15 && MONGO=mongodb://mongo:27017/franklin BIT_API_KEY=1b64d15bace644849152c9e42f7091bc BIT_API_SECRET=5d392d3589004bf9988b72f10022c509 SPLUNKTOKEN=00000000-0000-0000-0000-000000000000 node ./test/api.integration.tests.js | tap-spec"
   },
   "author": "",
   "license": "ISC",
