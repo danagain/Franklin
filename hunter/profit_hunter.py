@@ -16,9 +16,8 @@ import urllib.request
 import ssl
 
 TIMEINTERVAL = int(os.environ['TIMEINTERVAL'])
-TIME = int(os.environ['TIME'])
-DATACOUNT = TIME * (60/TIMEINTERVAL) # Constant representing the data points per hour
-
+COLLECTION_MINUTES = int(os.environ['COLLECTION_MINUTES'])
+DATACOUNT = COLLECTION_MINUTES * (60/TIMEINTERVAL)
 ssl._create_default_https_context = ssl._create_unverified_context
 
 class MyThread(threading.Thread):
@@ -202,7 +201,7 @@ def thread_work(coin):
         last_price, stdupper,\
         stdlower, time_stamp = get_data(coin)
         # If the current price has fallen below our threshold, it's time to buy
-        if last_price[-1] < (0.998*stdlower) and purchase == 0 and \
+        if last_price[-1] < (0.999*stdlower) and purchase == 0 and \
                         stdupper >= (last_price[-1] * 1.0025):
             purchase = last_price[-1]
             purchase_dict = {'Coin': coin, 'OrderType':'LIMIT',\
@@ -235,7 +234,7 @@ def thread_work(coin):
 
 if __name__ == "__main__":
     print("Waiting for correct amount of data")
-    time_for_data = TIME * 60
+    time_for_data = COLLECTION_MINUTES * 60
     time.sleep(time_for_data)
     COINS = get_coins() # Get all of the coins from the WEB-API
     # Add 15 min wait here for profit testing phase
