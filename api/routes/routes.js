@@ -6,9 +6,9 @@ const loggingController = require("../controllers/logger.js")();
 
 let mongoUrl;
 if (process.env.APP_ENV) {
-  mongoUrl = "mongodb://mongo:27017/franklin"
+  mongoUrl = "mongodb://mongo:27017/franklin";
 } else {
-  mongoUrl = "mongodb://localhost:27017/franklin"
+  mongoUrl = "mongodb://localhost:27017/franklin";
 }
 
 bittrex.options({
@@ -114,12 +114,9 @@ const routes = () => {
     });
   });
 
-  router.route("/api/bittrex/:currency")
+  router
+    .route("/api/bittrex/:currency")
     .post((req, res, next) => {
-      loggingController.log({
-        message: { info: req.body, headers: req.headers, method: req.method },
-        severity: "info"
-      });
       // bittrex.tradebuy({
       //     MarketName: req.params.currency,
       //     OrderType: req.body.OrderType,
@@ -154,7 +151,7 @@ const routes = () => {
       mongoClient.connect(mongoUrl, (err, db) => {
         const collection = db.collection(req.params.currency);
         const documentCount = parseInt(req.query.n);
-        console.log(documentCount)
+        console.log(documentCount);
         mongoController
           .findDocuments(collection, documentCount)
           .then(data => {
