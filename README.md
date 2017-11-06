@@ -56,8 +56,8 @@ TO-DO
 #### Linting
 For Javascript components => `npm lint`
 
-#### Tests
-For Javascript components => `npm test`
+#### Acceptance Tests
+For Javascript components => `npm test | tap-spec` (After you have done docker-compose up -d)
 
 ## Dependencies
 See `requirements.txt` for Python Components and Package.json for Javascript components.
