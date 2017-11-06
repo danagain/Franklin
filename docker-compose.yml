@@ -16,7 +16,7 @@ services:
   hunter:
     build: ./hunter
     environment:
-      - TIMEINTERVAL=3
+      - LOOP_SECONDS=3
       - SPLUNKTOKEN=00000000-0000-0000-0000-000000000000
       - APP_ENV=docker
       - COLLECTION_MINUTES=15
