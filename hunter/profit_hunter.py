@@ -15,7 +15,10 @@ import numpy as np
 import urllib.request
 import ssl
 
-DATACOUNT = os.environ['DATACOUNT'] # Constant representing the data points per hour
+TIMEINTERVAL = int(os.environ['TIMEINTERVAL'])
+TIME = int(os.environ['TIME'])
+DATACOUNT = TIME * (60/TIMEINTERVAL) # Constant representing the data points per hour
+
 ssl._create_default_https_context = ssl._create_unverified_context
 
 class MyThread(threading.Thread):
@@ -170,8 +173,8 @@ def get_data(coin):
             for doc in data:  # Iterate stored documents
                 last_price.append(doc['Last'])
                 datetime_data.append(doc['TimeStamp'])
-            avgrecentprice = np.mean(last_price[len(last_price) - int(DATACOUNT) : -1])
-            recentstd = np.std(last_price[len(last_price) - (int(DATACOUNT)):-1])
+            avgrecentprice = np.mean(last_price[len(last_price) - DATACOUNT : -1])
+            recentstd = np.std(last_price[len(last_price) - (DATACOUNT):-1])
             recentstdupper = avgrecentprice + 2*(recentstd/2)
             recentstdlower = avgrecentprice - 2*(recentstd/2)
             datedata = datetime_data[-1]
@@ -199,7 +202,7 @@ def thread_work(coin):
         last_price, stdupper,\
         stdlower, time_stamp = get_data(coin)
         # If the current price has fallen below our threshold, it's time to buy
-        if last_price[-1] < (1.001*stdlower) and purchase == 0 and \
+        if last_price[-1] < (0.998*stdlower) and purchase == 0 and \
                         stdupper >= (last_price[-1] * 1.0025):
             purchase = last_price[-1]
             purchase_dict = {'Coin': coin, 'OrderType':'LIMIT',\
@@ -227,14 +230,13 @@ def thread_work(coin):
         print(hunter_dict)
         token = os.environ['SPLUNKTOKEN']
         send_event("splunk", token, hunter_dict)
-        time.sleep(10)
+        time.sleep(TIMEINTERVAL)
 
 
 if __name__ == "__main__":
     print("Waiting for correct amount of data")
-    time_for_data = int(DATACOUNT) * 10
-    #time.sleep(time_for_data)
-    time.sleep(900)
+    time_for_data = TIME * 60
+    time.sleep(time_for_data)
     COINS = get_coins() # Get all of the coins from the WEB-API
     # Add 15 min wait here for profit testing phase
     THREADS = []
@@ -247,4 +249,4 @@ if __name__ == "__main__":
         THREADS[i].start()
         time.sleep(2)
     while threading.active_count() > 0:
-        time.sleep(9)
+        time.sleep(30)
