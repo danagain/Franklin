@@ -220,6 +220,7 @@ def thread_work(coin):
              trans_count += 1
              profitloss += (sell - (1.0025*purchase))
              purchase = 0
+
         hunter_dict = {'Coin': coin, 'Last':last_price[-1], 'Upper':stdupper,\
          'Lower':stdlower, 'Time':time_stamp, 'Transactions':trans_count,\
          'Balance':profitloss, 'Current Buy':purchase}
@@ -233,7 +234,7 @@ if __name__ == "__main__":
     print("Waiting for correct amount of data")
     time_for_data = int(DATACOUNT) * 10
     #time.sleep(time_for_data)
-    time.sleep(20)
+    time.sleep(900)
     COINS = get_coins() # Get all of the coins from the WEB-API
     # Add 15 min wait here for profit testing phase
     THREADS = []
