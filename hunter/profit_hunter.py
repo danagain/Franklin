@@ -15,9 +15,9 @@ import numpy as np
 import urllib.request
 import ssl
 
-TIMEINTERVAL = int(os.environ['TIMEINTERVAL'])
+LOOP_SECONDS = int(os.environ['LOOP_SECONDS'])
 COLLECTION_MINUTES = int(os.environ['COLLECTION_MINUTES'])
-DATACOUNT = COLLECTION_MINUTES * (60/TIMEINTERVAL)
+DATACOUNT = COLLECTION_MINUTES * (60/LOOP_SECONDS)
 ssl._create_default_https_context = ssl._create_unverified_context
 
 class MyThread(threading.Thread):
@@ -172,8 +172,8 @@ def get_data(coin):
             for doc in data:  # Iterate stored documents
                 last_price.append(doc['Last'])
                 datetime_data.append(doc['TimeStamp'])
-            avgrecentprice = np.mean(last_price[len(last_price) - DATACOUNT : -1])
-            recentstd = np.std(last_price[len(last_price) - (DATACOUNT):-1])
+            avgrecentprice = np.mean(last_price[len(last_price) - (int(DATACOUNT)):-1])
+            recentstd = np.std(last_price[len(last_price) - (int(DATACOUNT)):-1])
             recentstdupper = avgrecentprice + 2*(recentstd/2)
             recentstdlower = avgrecentprice - 2*(recentstd/2)
             datedata = datetime_data[-1]
@@ -229,13 +229,14 @@ def thread_work(coin):
         print(hunter_dict)
         token = os.environ['SPLUNKTOKEN']
         send_event("splunk", token, hunter_dict)
-        time.sleep(TIMEINTERVAL)
+        time.sleep(LOOP_SECONDS)
 
 
 if __name__ == "__main__":
     print("Waiting for correct amount of data")
-    time_for_data = COLLECTION_MINUTES * 60
-    time.sleep(time_for_data)
+    #time_for_data = COLLECTION_MINUTES * 60
+    time.sleep(10)
+    #time.sleep(time_for_data)
     COINS = get_coins() # Get all of the coins from the WEB-API
     # Add 15 min wait here for profit testing phase
     THREADS = []
