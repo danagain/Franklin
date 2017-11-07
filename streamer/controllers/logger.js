@@ -1,5 +1,6 @@
+SplunkLogger = require("splunk-logging").Logger;
+
 const logger = () => {
-  SplunkLogger = require("splunk-logging").Logger;
 
   const config = {
     token: process.env.SPLUNKTOKEN,
