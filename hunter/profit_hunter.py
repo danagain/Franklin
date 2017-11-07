@@ -200,6 +200,10 @@ def thread_work(coin):
     while True:
         last_price, stdupper,\
         stdlower, time_stamp = get_data(coin)
+        while(len(last_price) < 2):
+                    last_price, stdupper,\
+                    stdlower, time_stamp = get_data(coin)
+                    time.sleep(5)      
         # If the current price has fallen below our threshold, it's time to buy
         if last_price[-1] < (0.999*stdlower) and purchase == 0 and \
                         stdupper >= (last_price[-1] * 1.0025):
@@ -235,7 +239,7 @@ def thread_work(coin):
 if __name__ == "__main__":
     print("Waiting for correct amount of data")
     #time_for_data = COLLECTION_MINUTES * 60
-    time.sleep(10)
+    time.sleep(40)
     #time.sleep(time_for_data)
     COINS = get_coins() # Get all of the coins from the WEB-API
     # Add 15 min wait here for profit testing phase
