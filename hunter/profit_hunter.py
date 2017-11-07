@@ -1,9 +1,7 @@
 """
-
 Module to interact with WEB-API to locate and signal for potentially
 profitable trades. Market stocks to monitor are passed from the WEB-API
 where a thread is spawned to handle each market.
-
 """
 import os
 import threading
@@ -22,28 +20,21 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 class MyThread(threading.Thread):
     """
-
     Class to handle all of the threading aspect
-
     """
     def __init__(self, coin):
         """
-
         Class constructor for initialisation
-
         @param coin: The coin/stock this thread is
         responsible for monitoring
-
         """
         threading.Thread.__init__(self)
         self.coin = coin
 
     def run(self):
         """
-
         Custom Override of the Thread Librarys run function to start the
         thread work function
-
         """
         thread_work(self.coin)
 
@@ -115,14 +106,11 @@ def send_event(splunk_host, auth_token, log_data):
 
 def http_request(ptype, python_dict):
     """
-
     This function is used to post data from the hunter to the
     web-api
-
     @param ptype: Specifies the post type, e.g graph, buy, sell
     @param python_dict: Python dictionary containing data
     sent to web-api
-
     """
     try:
         endpoint_url = 'http://web-api:3000/api/{0}/{1}'.format(ptype, python_dict['Coin'])
@@ -135,13 +123,10 @@ def http_request(ptype, python_dict):
 
 def get_coins():
     """
-
     This is the first function that is called as the hunter runs,
     this function makes a call to the WEB-API to determine which stocks
     are going to be hunted
-
     @return data: Returns a list of coins returned from the WEB-API
-
     """
     try:
         endpoint_url = 'http://web-api:3000/api/coins'
@@ -176,7 +161,8 @@ def get_data(coin):
             recentstd = np.std(last_price[len(last_price) - (int(DATACOUNT)):-1])
             recentstdupper = avgrecentprice + 2*(recentstd/2)
             recentstdlower = avgrecentprice - 2*(recentstd/2)
-            datedata = datetime_data[-1]
+            datedata = datetime_data[0]
+            last_price.reverse()
 
             return last_price, recentstdupper, recentstdlower,\
             datedata
@@ -186,12 +172,9 @@ def get_data(coin):
 
 def thread_work(coin):
     """
-
     Thread_work handles all of the work each thread must continually
     perform whilst in a never ending loop
-
     @param coin: The stock/coin to be monitored
-
     """
     purchase = 0
     profitloss = 0
@@ -200,10 +183,7 @@ def thread_work(coin):
     while True:
         last_price, stdupper,\
         stdlower, time_stamp = get_data(coin)
-        while(len(last_price) < 2):
-                    last_price, stdupper,\
-                    stdlower, time_stamp = get_data(coin)
-                    time.sleep(5)      
+        print(last_price[-1])
         # If the current price has fallen below our threshold, it's time to buy
         if last_price[-1] < (0.999*stdlower) and purchase == 0 and \
                         stdupper >= (last_price[-1] * 1.0025):
