@@ -183,7 +183,6 @@ def thread_work(coin):
     while True:
         last_price, stdupper,\
         stdlower, time_stamp = get_data(coin)
-        print(last_price[-1])
         # If the current price has fallen below our threshold, it's time to buy
         if last_price[-1] < (0.999*stdlower) and purchase == 0 and \
                         stdupper >= (last_price[-1] * 1.0025):
@@ -210,7 +209,6 @@ def thread_work(coin):
         hunter_dict = {'Coin': coin, 'Last':last_price[-1], 'Upper':stdupper,\
          'Lower':stdlower, 'Time':time_stamp, 'Transactions':trans_count,\
          'Balance':profitloss, 'Current Buy':purchase}
-        print(hunter_dict)
         token = os.environ['SPLUNKTOKEN']
         send_event("splunk", token, hunter_dict)
         time.sleep(LOOP_SECONDS)
