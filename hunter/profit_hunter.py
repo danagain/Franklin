@@ -161,8 +161,8 @@ def get_data(coin):
             recentstd = np.std(last_price[len(last_price) - (int(DATACOUNT)):-1])
             recentstdupper = avgrecentprice + 2*(recentstd/2)
             recentstdlower = avgrecentprice - 2*(recentstd/2)
-            datedata = datetime_data[0]
-            last_price.reverse()
+            datedata = datetime_data[-1]
+            #last_price.reverse()
 
             return last_price, recentstdupper, recentstdlower,\
             datedata
