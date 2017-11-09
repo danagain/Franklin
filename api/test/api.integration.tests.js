@@ -5,7 +5,7 @@ const app = require("../api");
 console.log("Running Integration Tests, Ensure Docker-Compose env is up and running.")
 
 const expectedCoins = [
-    { coins: ["BTC-ETH", "BTC-NEO", "BTC-LTC", "USDT-BTC"] }
+    { coins: ["BTC-ETH", "BTC-NEO", "BTC-LTC", "USDT-BTC", "BTC-BCC", "BTC-VTC", "BTC-OMG", "BTC-DASH", "BTC-XRP"] }
   ];
 
 test("/ should 404", t => {

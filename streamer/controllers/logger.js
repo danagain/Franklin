@@ -1,7 +1,6 @@
 SplunkLogger = require("splunk-logging").Logger;
 
 const logger = () => {
-
   const config = {
     token: process.env.SPLUNKTOKEN,
     url: "https://splunk:8088"

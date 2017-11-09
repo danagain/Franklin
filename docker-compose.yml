@@ -2,6 +2,7 @@ version: '3'
 services:
   streamer:
     build: ./streamer
+    restart: always
     environment:
       - MONGO=mongodb://mongo:27017/franklin
       - BIT_API_KEY=1b64d15bace644849152c9e42f7091bc
@@ -15,16 +16,18 @@ services:
       - web-api
   hunter:
     build: ./hunter
+    restart: always
     environment:
       - LOOP_SECONDS=3
       - SPLUNKTOKEN=00000000-0000-0000-0000-000000000000
       - APP_ENV=docker
-      - COLLECTION_MINUTES=15
+      - COLLECTION_MINUTES=5
     links:
       - mongo
       - splunk
   web-api:
     build: ./api
+    restart: always
     environment:
       - MONGO=mongodb://mongo:27017/franklin
       - BIT_API_KEY=1b64d15bace644849152c9e42f7091bc
@@ -40,6 +43,7 @@ services:
       - 3000
   mongo:
     image: mongo
+    restart: always
     volumes:
         - ./scripts/imports:/tmp/dumps
     ports:

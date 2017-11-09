@@ -15,12 +15,12 @@ const findDocuments = (collection, docCount) => {
     collection
       .find({})
       .limit(docCount)
-      .sort({$natural:-1})
+      .sort({ $natural: -1 })
       .toArray((err, docs) => {
         if (err) {
           reject(err);
         }
-      resolve(docs.reverse());
+        resolve(docs.reverse());
       });
   });
 };

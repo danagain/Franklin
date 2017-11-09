@@ -90,7 +90,7 @@ def send_event(splunk_host, auth_token, log_data):
 
       if post_success == True:
          # Event was recieved successfully
-         print ("Event was recieved successfully")
+         print ("Event was recieved successfully by the API")
       else:
          # Event returned an error
          print ("Error sending request.")
