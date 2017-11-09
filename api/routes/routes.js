@@ -129,11 +129,11 @@ const routes = () => {
             db.close();
           })
           .catch(err => {
-            res.status(500).json([{ error: err }]);
             loggingController.log({
               message: { info: err, headers: req.headers, method: req.method },
               severity: "error"
             });
+            res.status(500).json([{ error: err }]);
             db.close();
             res.end();
           });
