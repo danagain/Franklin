@@ -212,7 +212,7 @@ def thread_work(coin):
              purchase_total = 0
 
         elif last_price[-1] <= (purchase * 0.996) and purchase != 0:
-             sell = BTC_PER_PURCHASE/last_price[-1]
+             sell = purchase_qty * last_price[-1]
              trans_count += 1
              profitloss += (sell - (1.0025*purchase_total))
              purchase = 0
