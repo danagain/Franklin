@@ -222,6 +222,7 @@ def thread_work(coin, lock):
         elif last_price[-1] <= (purchase * 0.996) and purchase != 0:
              sell = purchase_qty * last_price[-1]
              trans_count += 1
+             lock.acquire()
              profitloss += (sell - (1.0025*purchase_total))
              LOSS += (sell - (1.0025*purchase_total))
              PROFIT_MINUS_LOSS += (sell - (1.0025 * purchase_total))
@@ -229,7 +230,7 @@ def thread_work(coin, lock):
              purchase = 0
              purchase_qty = 0
              purchase_total = 0
-             lock.acquire()
+
 
 
         hunter_dict = {'Coin': coin, 'Last':last_price[-1], 'Upper':stdupper,\
