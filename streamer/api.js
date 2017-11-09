@@ -18,13 +18,17 @@ setInterval(() => {
   request.get("http://web-api:3000/api/coins", (error, response) => {
     if (error) {
       loggingController.log({
-        message: { info: err },
+        message: { info: error },
         severity: "error"
       });
-      throw err;
+      throw error;
     }
     bittrex.getmarketsummaries((data, err) => {
       if (err) {
+        loggingController.log({
+          message: { info: err },
+          severity: "error"
+        });
         throw err;
       }
 
