@@ -18,6 +18,9 @@ COLLECTION_MINUTES = int(os.environ['COLLECTION_MINUTES'])
 DATACOUNT = COLLECTION_MINUTES * (60/LOOP_SECONDS)
 ssl._create_default_https_context = ssl._create_unverified_context
 BTC_PER_PURCHASE = (50/7112)
+PROFIT = 0
+LOSS = 0
+PROFIT_MINUS_LOSS = 0
 
 class MyThread(threading.Thread):
     """
@@ -31,13 +34,15 @@ class MyThread(threading.Thread):
         """
         threading.Thread.__init__(self)
         self.coin = coin
+        self.lock = threading.Lock()
 
     def run(self):
         """
         Custom Override of the Thread Librarys run function to start the
         thread work function
         """
-        thread_work(self.coin)
+
+        thread_work(self.coin, self.lock)
 
 
 def send_event(splunk_host, auth_token, log_data):
@@ -163,11 +168,6 @@ def get_data(coin):
             recentstdupper = avgrecentprice + 2*(recentstd/2)
             recentstdlower = avgrecentprice - 2*(recentstd/2)
             datedata = datetime_data[-1]
-            print(DATACOUNT)
-            print("mean : ", avgrecentprice)
-            print("Upper: ", recentstdupper)
-            print("Lower: ", recentstdlower)
-            #last_price.reverse()
 
             return last_price, recentstdupper, recentstdlower,\
             datedata
@@ -175,12 +175,15 @@ def get_data(coin):
         print(error)
         sys.exit(1)
 
-def thread_work(coin):
+def thread_work(coin, lock):
     """
     Thread_work handles all of the work each thread must continually
     perform whilst in a never ending loop
     @param coin: The stock/coin to be monitored
     """
+    global LOSS
+    global PROFIT
+    global PROFIT_MINUS_LOSS
     purchase = 0
     profitloss = 0
     trans_count = 0
@@ -210,6 +213,10 @@ def thread_work(coin):
              purchase = 0
              purchase_qty = 0
              purchase_total = 0
+             lock.acquire()
+             PROFIT += (sell - (1.0025 * purchase_total))
+             PROFIT_MINUS_LOSS += (sell - (1.0025 * purchase_total))
+             lock.release()
 
         elif last_price[-1] <= (purchase * 0.996) and purchase != 0:
              sell = purchase_qty * last_price[-1]
@@ -218,12 +225,16 @@ def thread_work(coin):
              purchase = 0
              purchase_qty = 0
              purchase_total = 0
-
+             lock.acquire()
+             LOSS += (sell - (1.0025*purchase_total))
+             PROFIT_MINUS_LOSS += (sell - (1.0025 * purchase_total))
+             lock.release()
 
         hunter_dict = {'Coin': coin, 'Last':last_price[-1], 'Upper':stdupper,\
          'Lower':stdlower, 'Time':time_stamp, 'Transactions':trans_count,\
-         'Balance':profitloss, 'Current Buy':purchase}
+         'Balance':profitloss, 'Profit':PROFIT, 'Loss':LOSS, 'Net':PROFIT_MINUS_LOSS}
         token = os.environ['SPLUNKTOKEN']
+        print(hunter_dict)
         send_event("splunk", token, hunter_dict)
         time.sleep(LOOP_SECONDS)
 

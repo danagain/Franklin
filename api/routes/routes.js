@@ -48,7 +48,6 @@ const routes = () => {
           "BTC-EMC2",
           "BTC-XVC",
           "BTC-VOX"
-
         ]
       }
     ];
