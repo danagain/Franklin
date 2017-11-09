@@ -17,6 +17,7 @@ LOOP_SECONDS = int(os.environ['LOOP_SECONDS'])
 COLLECTION_MINUTES = int(os.environ['COLLECTION_MINUTES'])
 DATACOUNT = COLLECTION_MINUTES * (60/LOOP_SECONDS)
 ssl._create_default_https_context = ssl._create_unverified_context
+BTC_PER_PURCHASE = (50/7112)
 
 class MyThread(threading.Thread):
     """
@@ -157,11 +158,15 @@ def get_data(coin):
             for doc in data:  # Iterate stored documents
                 last_price.append(doc['Last'])
                 datetime_data.append(doc['TimeStamp'])
-            avgrecentprice = np.mean(last_price[len(last_price) - (int(DATACOUNT)):-1])
-            recentstd = np.std(last_price[len(last_price) - (int(DATACOUNT)):-1])
+            avgrecentprice = np.mean(last_price[(len(last_price) - int(DATACOUNT)):-1])
+            recentstd = np.std(last_price[(len(last_price) - int(DATACOUNT)):-1])
             recentstdupper = avgrecentprice + 2*(recentstd/2)
             recentstdlower = avgrecentprice - 2*(recentstd/2)
             datedata = datetime_data[-1]
+            print(DATACOUNT)
+            print("mean : ", avgrecentprice)
+            print("Upper: ", recentstdupper)
+            print("Lower: ", recentstdlower)
             #last_price.reverse()
 
             return last_price, recentstdupper, recentstdlower,\
@@ -179,6 +184,8 @@ def thread_work(coin):
     purchase = 0
     profitloss = 0
     trans_count = 0
+    purchase_qty = 0
+    purchase_total = 0
     sell = 0
     while True:
         last_price, stdupper,\
@@ -187,6 +194,8 @@ def thread_work(coin):
         if last_price[-1] < (0.999*stdlower) and purchase == 0 and \
                         stdupper >= (last_price[-1] * 1.0025):
             purchase = last_price[-1]
+            purchase_qty = ((BTC_PER_PURCHASE + profitloss) / last_price[-1])
+            purchase_total = purchase_qty * last_price[-1]
             purchase_dict = {'Coin': coin, 'OrderType':'LIMIT',\
                     'Quantity': 1.00000000, 'Rate':last_price[-1],\
                     'TimeInEffect':'IMMEDIATE_OR_CANCEL', \
@@ -195,16 +204,21 @@ def thread_work(coin):
             http_request("buy", purchase_dict)
 
         elif last_price[-1] >= (1.004 * purchase) and purchase != 0:
-             sell = last_price[-1]
-             profitloss += (sell - (1.0025 * purchase))
+             sell = purchase_qty * last_price[-1]
+             profitloss += (sell - (1.0025 * purchase_total))
              trans_count += 1
              purchase = 0
+             purchase_qty = 0
+             purchase_total = 0
 
         elif last_price[-1] <= (purchase * 0.996) and purchase != 0:
-             sell = last_price[-1]
+             sell = BTC_PER_PURCHASE/last_price[-1]
              trans_count += 1
-             profitloss += (sell - (1.0025*purchase))
+             profitloss += (sell - (1.0025*purchase_total))
              purchase = 0
+             purchase_qty = 0
+             purchase_total = 0
+
 
         hunter_dict = {'Coin': coin, 'Last':last_price[-1], 'Upper':stdupper,\
          'Lower':stdlower, 'Time':time_stamp, 'Transactions':trans_count,\

@@ -37,12 +37,18 @@ const routes = () => {
           "BTC-ETH",
           "BTC-NEO",
           "BTC-LTC",
-          "USDT-BTC",
           "BTC-BCC",
           "BTC-VTC",
           "BTC-OMG",
           "BTC-DASH",
-          "BTC-XRP"
+          "BTC-XRP",
+          "BTC-TRST",
+          "BTC-ARK",
+          "BTC-XVG",
+          "BTC-EMC2",
+          "BTC-XVC",
+          "BTC-VOX"
+
         ]
       }
     ];
