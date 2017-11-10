@@ -17,10 +17,10 @@ LOOP_SECONDS = int(os.environ['LOOP_SECONDS'])
 COLLECTION_MINUTES = int(os.environ['COLLECTION_MINUTES'])
 DATACOUNT = COLLECTION_MINUTES * (60/LOOP_SECONDS)
 ssl._create_default_https_context = ssl._create_unverified_context
-BTC_PER_PURCHASE = (50/7112)
-PROFIT = 0.000000000000000000
-LOSS = 0.000000000000000000
-PROFIT_MINUS_LOSS = 0.000000000000000000
+BTC_PER_PURCHASE = 0.00060000
+PROFIT = 0.00000000
+LOSS = 0.00000000
+PROFIT_MINUS_LOSS = 0.00000000
 
 class MyThread(threading.Thread):
     """
@@ -151,6 +151,8 @@ def get_coins():
 def get_data(coin):
     last_price = []
     datetime_data = []
+    bid_price = []
+    ask_price = []
     try:
         query = '?n={0}'.format(DATACOUNT)
         endpoint_url = 'http://web-api:3000/api/bittrex/{0}/{1}'.format(coin, query)
@@ -163,6 +165,8 @@ def get_data(coin):
             for doc in data:  # Iterate stored documents
                 last_price.append(doc['Last'])
                 datetime_data.append(doc['TimeStamp'])
+                bid_price.append(doc['Bid'])
+                ask_price.append(doc['Ask'])
             avgrecentprice = np.mean(last_price[(len(last_price) - int(DATACOUNT)):-1])
             recentstd = np.std(last_price[(len(last_price) - int(DATACOUNT)):-1])
             recentstdupper = avgrecentprice + 2*(recentstd/2)
@@ -170,7 +174,7 @@ def get_data(coin):
             datedata = datetime_data[-1]
 
             return last_price, recentstdupper, recentstdlower,\
-            datedata
+            datedata, bid_price
     except requests.exceptions.RequestException as error:
         print(error)
         sys.exit(1)
@@ -192,22 +196,23 @@ def thread_work(coin, lock):
     sell = 0
     while True:
         last_price, stdupper,\
-        stdlower, time_stamp = get_data(coin)
+        stdlower, time_stamp, bid_price, ask_price = get_data(coin)
         # If the current price has fallen below our threshold, it's time to buy
-        if last_price[-1] < (0.999*stdlower) and purchase == 0 and \
-                        stdupper >= (last_price[-1] * 1.0025):
-            purchase = last_price[-1]
-            purchase_qty = ((BTC_PER_PURCHASE + profitloss) / last_price[-1])
+        if ask_price[-1] < (0.999*stdlower) and purchase == 0 and \
+                        stdupper >= (ask_price[-1] * 1.0025):
+            purchase = ask_price[-1]
+            purchase_qty = ((BTC_PER_PURCHASE + profitloss) / ask_price[-1])
+            purchase_qty = round(purchase_qty,8)
             purchase_total = purchase_qty * last_price[-1]
             purchase_dict = {'Coin': coin, 'OrderType':'LIMIT',\
-                    'Quantity': 1.00000000, 'Rate':last_price[-1],\
+                    'Quantity': purchase_qty, 'Rate':ask_price[-1],\
                     'TimeInEffect':'IMMEDIATE_OR_CANCEL', \
                     'ConditionType': 'NONE', 'Target': 0}
 
             http_request("buy", purchase_dict)
 
-        elif last_price[-1] >= (1.004 * purchase) and purchase != 0:
-             sell = purchase_qty * last_price[-1]
+        elif bid_price[-1] >= (1.004 * purchase) and purchase != 0:
+             sell = purchase_qty * bid_price[-1]
              profitloss += (sell - (1.0025 * purchase_total))
              lock.acquire()
              PROFIT += (sell - (1.0025 * purchase_total))
@@ -220,18 +225,16 @@ def thread_work(coin, lock):
 
 
         elif last_price[-1] <= (purchase * 0.996) and purchase != 0:
-             sell = purchase_qty * last_price[-1]
-             trans_count += 1
+             sell = purchase_qty * bid_price[-1]
              lock.acquire()
              profitloss += (sell - (1.0025*purchase_total))
              LOSS += (sell - (1.0025*purchase_total))
              PROFIT_MINUS_LOSS += (sell - (1.0025 * purchase_total))
              lock.release()
+             trans_count += 1
              purchase = 0
              purchase_qty = 0
              purchase_total = 0
-
-
 
         hunter_dict = {'Coin': coin, 'Last':last_price[-1], 'Upper':stdupper,\
          'Lower':stdlower, 'Time':time_stamp, 'Transactions':trans_count,\
