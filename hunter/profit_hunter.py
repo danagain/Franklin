@@ -203,7 +203,7 @@ def thread_work(coin, lock):
             purchase = ask_price[-1]
             purchase_qty = ((BTC_PER_PURCHASE + profitloss) / ask_price[-1])
             purchase_qty = round(purchase_qty,8)
-            purchase_total = purchase_qty * last_price[-1]
+            purchase_total = purchase_qty * ask_price[-1]
             purchase_dict = {'Coin': coin, 'OrderType':'LIMIT',\
                     'Quantity': purchase_qty, 'Rate':ask_price[-1],\
                     'TimeInEffect':'IMMEDIATE_OR_CANCEL', \
