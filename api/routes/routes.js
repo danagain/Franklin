@@ -55,72 +55,108 @@ const routes = () => {
   });
 
   router.route("/api/buy/:currency").post((req, res, next) => {
-    loggingController.log({
-      message: { info: req.body, headers: req.headers, method: req.method },
-      severity: "info"
-    });
-    // bittrex.tradebuy({
-    //     MarketName: req.params.currency,
-    //     OrderType: req.body.OrderType,
-    //     Quantity: req.body.Quantity,
-    //     Rate: req.body.Rate,
-    //     TimeInEffect: req.body.TimeInEffect, // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
-    //     ConditionType: req.body.ConditionType, // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
-    //     Target: req.body.Target, // used in conjunction with ConditionType
-    //   }, ( data, err ) => {
-    //     res.json( data );
-    //   });
-    mongoClient.connect(mongoUrl, (err, db) => {
-      const collection = db.collection(`buy-${req.params.currency}`);
-      mongoController
-        .insertDocuments(collection, req.body)
-        .then(data => {
-          res.json(data);
-          db.close();
-        })
-        .catch(err => {
+    bittrex.tradebuy(
+      {
+        MarketName: req.params.currency,
+        OrderType: req.body.OrderType,
+        Quantity: req.body.Quantity,
+        Rate: req.body.Rate,
+        TimeInEffect: req.body.TimeInEffect, // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
+        ConditionType: req.body.ConditionType, // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
+        Target: req.body.Target // used in conjunction with ConditionType
+      },
+      (data, err) => {
+        if (err) {
           loggingController.log({
-            message: { info: err, headers: req.headers, method: req.method },
+            message: {
+              info: err,
+              headers: req.headers,
+              method: req.method
+            },
             severity: "error"
           });
-          db.close();
-          res.status(500).json([{ error: err }]);
+
+          throw err.message;
+        }
+        loggingController.log({
+          message: { info: data, headers: req.headers, method: req.method },
+          severity: "info"
         });
-    });
+        mongoClient.connect(mongoUrl, (err, db) => {
+          const collection = db.collection(`buy-${req.params.currency}`);
+          mongoController
+            .insertDocuments(collection, data)
+            .then(data => {
+              res.json(data);
+              db.close();
+            })
+            .catch(err => {
+              loggingController.log({
+                message: {
+                  info: err,
+                  headers: req.headers,
+                  method: req.method
+                },
+                severity: "error"
+              });
+              db.close();
+              res.status(500).json([{ error: err }]);
+            });
+        });
+      }
+    );
   });
 
   router.route("/api/sell/:currency").post((req, res, next) => {
-    loggingController.log({
-      message: { info: req.body, headers: req.headers, method: req.method },
-      severity: "info"
-    });
-    // bittrex.tradesell({
-    //     MarketName: req.params.currency,
-    //     OrderType: req.body.OrderType,
-    //     Quantity: req.body.Quantity,
-    //     Rate: req.body.Rate,
-    //     TimeInEffect: req.body.TimeInEffect, // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
-    //     ConditionType: req.body.ConditionType, // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
-    //     Target: req.body.Target, // used in conjunction with ConditionType
-    //   }, ( data, err ) => {
-    //     res.json( data );
-    //   });
-    mongoClient.connect(mongoUrl, (err, db) => {
-      const collection = db.collection(`sell-${req.params.currency}`);
-      mongoController
-        .insertDocuments(collection, req.body)
-        .then(data => {
-          db.close();
-          res.json(data);
-        })
-        .catch(err => {
+    bittrex.tradesell(
+      {
+        MarketName: req.params.currency,
+        OrderType: req.body.OrderType,
+        Quantity: req.body.Quantity,
+        Rate: req.body.Rate,
+        TimeInEffect: req.body.TimeInEffect, // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
+        ConditionType: req.body.ConditionType, // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
+        Target: req.body.Target // used in conjunction with ConditionType
+      },
+      (data, err) => {
+        if (err) {
           loggingController.log({
-            message: { info: err, headers: req.headers, method: req.method },
+            message: {
+              info: err,
+              headers: req.headers,
+              method: req.method
+            },
             severity: "error"
           });
-          res.status(500).json([{ error: err }]);
+
+          throw err.message;
+        }
+        loggingController.log({
+          message: { info: data, headers: req.headers, method: req.method },
+          severity: "info"
         });
-    });
+        mongoClient.connect(mongoUrl, (err, db) => {
+          const collection = db.collection(`sell-${req.params.currency}`);
+          mongoController
+            .insertDocuments(collection, data)
+            .then(data => {
+              db.close();
+              res.json(data);
+            })
+            .catch(err => {
+              loggingController.log({
+                message: {
+                  info: err,
+                  headers: req.headers,
+                  method: req.method
+                },
+                severity: "error"
+              });
+              res.status(500).json([{ error: err.message }]);
+            });
+        });
+      }
+    );
   });
 
   router
@@ -140,7 +176,7 @@ const routes = () => {
               severity: "error"
             });
             db.close();
-            res.status(500).json([{ error: err }]);
+            res.status(500).json([{ error: err.message }]);
           });
       });
     })
