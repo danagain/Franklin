@@ -174,7 +174,7 @@ def get_data(coin):
             datedata = datetime_data[-1]
 
             return last_price, recentstdupper, recentstdlower,\
-            datedata, bid_price
+            datedata, bid_price, ask_price
     except requests.exceptions.RequestException as error:
         print(error)
         sys.exit(1)
