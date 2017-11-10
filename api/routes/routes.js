@@ -21,11 +21,23 @@ const routes = () => {
 
   router.route("/api/balance/:currency").get((req, res) => {
     bittrex.getbalance({ currency: req.params.currency }, (data, err) => {
-      loggingController.log({
-        message: { info: data, headers: req.headers, method: req.method },
-        severity: "info"
-      });
-      res.json(data);
+      if (err) {
+        loggingController.log({
+          message: {
+            info: err.message,
+            headers: req.headers,
+            method: req.method
+          },
+          severity: "error"
+        });
+        res.status(500).send(err.message);
+      } else {
+        loggingController.log({
+          message: { info: data, headers: req.headers, method: req.method },
+          severity: "info"
+        });
+        res.json(data);
+      }
     });
   });
 
@@ -69,40 +81,40 @@ const routes = () => {
         if (err) {
           loggingController.log({
             message: {
-              info: err,
+              info: err.message,
               headers: req.headers,
               method: req.method
             },
             severity: "error"
           });
-
-          throw err.message;
-        }
-        loggingController.log({
-          message: { info: data, headers: req.headers, method: req.method },
-          severity: "info"
-        });
-        mongoClient.connect(mongoUrl, (err, db) => {
-          const collection = db.collection(`buy-${req.params.currency}`);
-          mongoController
-            .insertDocuments(collection, data)
-            .then(data => {
-              res.json(data);
-              db.close();
-            })
-            .catch(err => {
-              loggingController.log({
-                message: {
-                  info: err,
-                  headers: req.headers,
-                  method: req.method
-                },
-                severity: "error"
+          res.status(500).send(err.message);
+        } else {
+          loggingController.log({
+            message: { info: data, headers: req.headers, method: req.method },
+            severity: "info"
+          });
+          mongoClient.connect(mongoUrl, (err, db) => {
+            const collection = db.collection(`buy-${req.params.currency}`);
+            mongoController
+              .insertDocuments(collection, data)
+              .then(data => {
+                res.json(data);
+                db.close();
+              })
+              .catch(err => {
+                loggingController.log({
+                  message: {
+                    info: err.message,
+                    headers: req.headers,
+                    method: req.method
+                  },
+                  severity: "error"
+                });
+                db.close();
+                res.status(500).json([{ error: err.message }]);
               });
-              db.close();
-              res.status(500).json([{ error: err }]);
-            });
-        });
+          });
+        }
       }
     );
   });
@@ -122,39 +134,39 @@ const routes = () => {
         if (err) {
           loggingController.log({
             message: {
-              info: err,
+              info: err.message,
               headers: req.headers,
               method: req.method
             },
             severity: "error"
           });
-
-          throw err.message;
-        }
-        loggingController.log({
-          message: { info: data, headers: req.headers, method: req.method },
-          severity: "info"
-        });
-        mongoClient.connect(mongoUrl, (err, db) => {
-          const collection = db.collection(`sell-${req.params.currency}`);
-          mongoController
-            .insertDocuments(collection, data)
-            .then(data => {
-              db.close();
-              res.json(data);
-            })
-            .catch(err => {
-              loggingController.log({
-                message: {
-                  info: err,
-                  headers: req.headers,
-                  method: req.method
-                },
-                severity: "error"
+          res.status(500).send(err.message);
+        } else {
+          loggingController.log({
+            message: { info: data, headers: req.headers, method: req.method },
+            severity: "info"
+          });
+          mongoClient.connect(mongoUrl, (err, db) => {
+            const collection = db.collection(`sell-${req.params.currency}`);
+            mongoController
+              .insertDocuments(collection, data)
+              .then(data => {
+                db.close();
+                res.json(data);
+              })
+              .catch(err => {
+                loggingController.log({
+                  message: {
+                    info: err.message,
+                    headers: req.headers,
+                    method: req.method
+                  },
+                  severity: "error"
+                });
+                res.status(500).json([{ error: err.message }]);
               });
-              res.status(500).json([{ error: err.message }]);
-            });
-        });
+          });
+        }
       }
     );
   });
@@ -172,7 +184,11 @@ const routes = () => {
           })
           .catch(err => {
             loggingController.log({
-              message: { info: err, headers: req.headers, method: req.method },
+              message: {
+                info: err.message,
+                headers: req.headers,
+                method: req.method
+              },
               severity: "error"
             });
             db.close();
@@ -192,11 +208,15 @@ const routes = () => {
           })
           .catch(err => {
             loggingController.log({
-              message: { info: err, headers: req.headers, method: req.method },
+              message: {
+                info: err.message,
+                headers: req.headers,
+                method: req.method
+              },
               severity: "error"
             });
             db.close();
-            res.status(500).json([{ error: err }]);
+            res.status(500).json([{ error: err.message }]);
           });
       });
     });
