@@ -198,21 +198,21 @@ def thread_work(coin, lock):
         last_price, stdupper,\
         stdlower, time_stamp, bid_price, ask_price = get_data(coin)
         # If the current price has fallen below our threshold, it's time to buy
-        if ask_price[-1] < (0.999*stdlower) and purchase == 0 and \
+        if bid_price[-1] < (0.999*stdlower) and purchase == 0 and \
                         stdupper >= (ask_price[-1] * 1.0025):
-            purchase = ask_price[-1]
-            purchase_qty = ((BTC_PER_PURCHASE + profitloss) / ask_price[-1])
+            purchase = bid_price[-1]
+            purchase_qty = ((BTC_PER_PURCHASE + profitloss) / bid_price[-1])
             purchase_qty = round(purchase_qty,8)
-            purchase_total = purchase_qty * ask_price[-1]
+            purchase_total = purchase_qty * bid_price[-1]
             purchase_dict = {'Coin': coin, 'OrderType':'LIMIT',\
-                    'Quantity': purchase_qty, 'Rate':ask_price[-1],\
+                    'Quantity': purchase_qty, 'Rate':bid_price[-1],\
                     'TimeInEffect':'IMMEDIATE_OR_CANCEL', \
                     'ConditionType': 'NONE', 'Target': 0}
 
             http_request("buy", purchase_dict)
 
-        elif bid_price[-1] >= (1.004 * purchase) and purchase != 0:
-             sell = purchase_qty * bid_price[-1]
+        elif ask_price[-1] >= (1.004 * purchase) and purchase != 0:
+             sell = purchase_qty * ask_price[-1]
              profitloss += (sell - (1.0025 * purchase_total))
              lock.acquire()
              PROFIT += (sell - (1.0025 * purchase_total))
@@ -224,11 +224,11 @@ def thread_work(coin, lock):
              purchase_total = 0
 
 
-        elif last_price[-1] <= (purchase * 0.996) and purchase != 0:
+        elif bid_price[-1] <= (purchase * 0.996) and purchase != 0:
              sell = purchase_qty * bid_price[-1]
              lock.acquire()
-             profitloss += (sell - (1.0025*purchase_total))
-             LOSS += (sell - (1.0025*purchase_total))
+             profitloss += (sell - (1.0025 * purchase_total))
+             LOSS += (sell - (1.0025 * purchase_total))
              PROFIT_MINUS_LOSS += (sell - (1.0025 * purchase_total))
              lock.release()
              trans_count += 1
@@ -236,7 +236,7 @@ def thread_work(coin, lock):
              purchase_qty = 0
              purchase_total = 0
 
-        hunter_dict = {'Coin': coin, 'Last':last_price[-1], 'Upper':stdupper,\
+        hunter_dict = {'Coin': coin, 'Bid':bid_price[-1], 'Ask':ask_price[-1], 'Last':last_price[-1], 'Upper':stdupper,\
          'Lower':stdlower, 'Time':time_stamp, 'Transactions':trans_count,\
          'Balance':profitloss, 'Profit':PROFIT, 'Loss':LOSS, 'Net':PROFIT_MINUS_LOSS}
         token = os.environ['SPLUNKTOKEN']
@@ -248,7 +248,7 @@ def thread_work(coin, lock):
 if __name__ == "__main__":
     print("Waiting for correct amount of data")
     #time_for_data = COLLECTION_MINUTES * 60
-    time.sleep(40)
+    time.sleep(20)
     #time.sleep(time_for_data)
     COINS = get_coins() # Get all of the coins from the WEB-API
     # Add 15 min wait here for profit testing phase
