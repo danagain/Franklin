@@ -22,6 +22,7 @@ const routes = () => {
   router.route("/api/balance/:currency").get((req, res) => {
     bittrex.getbalance({ currency: req.params.currency }, (data, err) => {
       if (err) {
+        print(req.body)
         loggingController.log({
           message: {
             info: err.message,
@@ -32,10 +33,6 @@ const routes = () => {
         });
         res.status(500).send(err.message);
       } else {
-        loggingController.log({
-          message: { info: data, headers: req.headers, method: req.method },
-          severity: "info"
-        });
         res.json(data);
       }
     });
@@ -46,7 +43,13 @@ const routes = () => {
     const coins = [
       {
         coins: [
-          "BTC-ETH"
+          "BTC-ETH",
+          "BTC-NEO",
+          "BTC-LTC",
+          "BTC-BCC",
+          "BTC-VTC",
+          "BTC-OMG",
+          "BTC-DASH"
         ]
       }
     ];

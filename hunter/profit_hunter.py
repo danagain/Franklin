@@ -125,9 +125,12 @@ def http_request(ptype, python_dict, method):
         if method == 'Post':
             requests.post(endpoint_url, data=jsondata, headers=headers)
         if method == 'Get':
-            r = requests.get(endpoint_url)
-            x = r.json()
-            return x
+            try:
+                r = requests.get(endpoint_url)
+                x = r.json()
+                return x
+            except ValueError:  # includes simplejson.decoder.JSONDecodeError
+                print("JSON ERROR")
     except requests.exceptions.RequestException as error:
         print(error)
         sys.exit(1)
@@ -202,13 +205,10 @@ def thread_work(coin, lock):
     split_market = coin.split('-')
     split_market = split_market[-1]
     split_market_dict = {'Coin':split_market}
+    current_balance = None
     while True:
         last_price, stdupper,\
         stdlower, time_stamp, bid_price, ask_price = get_data(coin)
-        balance_return = http_request('Balance', split_market_dict, 'Get')
-        result_return = balance_return['result']
-        current_balance = result_return['Balance']
-        print(balance_return)
         # If the current price has fallen below our threshold, it's time to buy
         if bid_price[-1] < (0.999*stdlower) and current_balance is None and \
                         stdupper >= (ask_price[-1] * 1.0025):
@@ -222,9 +222,19 @@ def thread_work(coin, lock):
                     'ConditionType': 'NONE', 'Target': 0}
 
             http_request("buy", purchase_dict, 'Post')
+            time.sleep(0.1)
+            balance_return = http_request('Balance', split_market_dict, 'Get')
+            result_return = balance_return['result']
+            current_balance = result_return['Balance']
 
         elif ask_price[-1] >= (1.004 * purchase) and current_balance is not None:
              sell = purchase_qty * ask_price[-1]
+             sell_dict = {'Coin': coin, 'OrderType':'LIMIT',\
+                    'Quantity': purchase_qty, 'Rate':ask_price[-1],\
+                    'TimeInEffect':'IMMEDIATE_OR_CANCEL', \
+                    'ConditionType': 'NONE', 'Target': 0}
+             http_request("sell", sell_dict, 'Post')
+
              profitloss += (sell - (1.0025 * purchase_total))
              lock.acquire()
              PROFIT += (sell - (1.0025 * purchase_total))
@@ -234,6 +244,7 @@ def thread_work(coin, lock):
              purchase = 0
              purchase_qty = 0
              purchase_total = 0
+
 
         elif bid_price[-1] <= (purchase * 0.996) and current_balance is not None   :
              sell = purchase_qty * bid_price[-1]
@@ -253,13 +264,13 @@ def thread_work(coin, lock):
         token = os.environ['SPLUNKTOKEN']
         print(hunter_dict)
         send_event("splunk", token, hunter_dict)
-        time.sleep(1)
+        time.sleep(3)
 
 
 if __name__ == "__main__":
     print("Waiting for correct amount of data")
     #time_for_data = COLLECTION_MINUTES * 60
-    time.sleep(900)
+    time.sleep(10)
     #time.sleep(time_for_data)
     COINS = get_coins() # Get all of the coins from the WEB-API
     # Add 15 min wait here for profit testing phase
