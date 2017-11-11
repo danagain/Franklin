@@ -143,7 +143,7 @@ def get_coins():
     @return data: Returns a list of coins returned from the WEB-API
     """
     try:
-        endpoint_url = 'http://web-api:3000/api/coins'
+        endpoint_url = 'http://web-api:3000/api/markets'
         resp = requests.get(url=endpoint_url)
         data = json.loads(resp.text)
         data = data[0]["coins"]
@@ -191,7 +191,7 @@ def thread_work(coin, lock):
     """
     Thread_work handles all of the work each thread must continually
     perform whilst in a never ending loop
-    @param coin: The stock/coin to be monitored
+    @param coin: The stock/market to be monitored
     """
     global LOSS
     global PROFIT
