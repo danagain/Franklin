@@ -110,7 +110,7 @@ def send_event(splunk_host, auth_token, log_data):
    return post_success
 
 
-def http_request(ptype, python_dict):
+def http_request(ptype, python_dict, method):
     """
     This function is used to post data from the hunter to the
     web-api
@@ -122,7 +122,10 @@ def http_request(ptype, python_dict):
         endpoint_url = 'http://web-api:3000/api/{0}/{1}'.format(ptype, python_dict['Coin'])
         jsondata = json.dumps(python_dict)
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-        requests.post(endpoint_url, data=jsondata, headers=headers)
+        if method == 'Post':
+            requests.post(endpoint_url, data=jsondata, headers=headers)
+        if method == 'Get':
+            return requests.get(endpoint_url)
     except requests.exceptions.RequestException as error:
         print(error)
         sys.exit(1)
@@ -200,8 +203,8 @@ def thread_work(coin, lock):
     while True:
         last_price, stdupper,\
         stdlower, time_stamp, bid_price, ask_price = get_data(coin)
-        balance_return = http_request('Balance', split_market_dict)
-        current_balance = balance_return['Balance']
+        balance_return = http_request('Balance', split_market_dict, 'Get')
+        print(balance_return)
         # If the current price has fallen below our threshold, it's time to buy
         if bid_price[-1] < (0.999*stdlower) and current_balance == 0 and \
                         stdupper >= (ask_price[-1] * 1.0025):
@@ -214,7 +217,7 @@ def thread_work(coin, lock):
                     'TimeInEffect':'IMMEDIATE_OR_CANCEL', \
                     'ConditionType': 'NONE', 'Target': 0}
 
-            http_request("buy", purchase_dict)
+            http_request("buy", purchase_dict, 'Post')
 
         elif ask_price[-1] >= (1.004 * purchase) and current_balance != 0:
              sell = purchase_qty * ask_price[-1]
@@ -227,7 +230,6 @@ def thread_work(coin, lock):
              purchase = 0
              purchase_qty = 0
              purchase_total = 0
-
 
         elif bid_price[-1] <= (purchase * 0.996) and current_balance != 0:
              sell = purchase_qty * bid_price[-1]
@@ -247,13 +249,13 @@ def thread_work(coin, lock):
         token = os.environ['SPLUNKTOKEN']
         print(hunter_dict)
         send_event("splunk", token, hunter_dict)
-        time.sleep(LOOP_SECONDS)
+        time.sleep(1)
 
 
 if __name__ == "__main__":
     print("Waiting for correct amount of data")
     #time_for_data = COLLECTION_MINUTES * 60
-    time.sleep(20)
+    time.sleep(15)
     #time.sleep(time_for_data)
     COINS = get_coins() # Get all of the coins from the WEB-API
     # Add 15 min wait here for profit testing phase
