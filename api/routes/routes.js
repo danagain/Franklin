@@ -22,7 +22,7 @@ const routes = () => {
   router.route("/api/balance/:currency").get((req, res) => {
     bittrex.getbalance({ currency: req.params.currency }, (data, err) => {
       if (err) {
-        print(req.body)
+        console.log(req.body)
         loggingController.log({
           message: {
             info: err.message,

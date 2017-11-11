@@ -199,13 +199,15 @@ def thread_work(coin, lock):
     purchase = 0
     profitloss = 0
     trans_count = 0
-    purchase_qty = 0
     purchase_total = 0
     sell = 0
     split_market = coin.split('-')
     split_market = split_market[-1]
     split_market_dict = {'Coin':split_market}
-    current_balance = 0
+    balance_return = http_request('Balance', split_market_dict, 'Get')
+    result_return = balance_return['result']
+    current_balance = result_return['Balance']
+    purchase_qty = current_balance
     while True:
         last_price, stdupper,\
         stdlower, time_stamp, bid_price, ask_price = get_data(coin)
@@ -222,7 +224,7 @@ def thread_work(coin, lock):
                     'ConditionType': 'NONE', 'Target': 0}
 
             http_request("buy", purchase_dict, 'Post')
-            time.sleep(0.1)
+            time.sleep(1)
             balance_return = http_request('Balance', split_market_dict, 'Get')
             result_return = balance_return['result']
             current_balance = result_return['Balance']
@@ -234,6 +236,7 @@ def thread_work(coin, lock):
                     'TimeInEffect':'IMMEDIATE_OR_CANCEL', \
                     'ConditionType': 'NONE', 'Target': 0}
              http_request("sell", sell_dict, 'Post')
+             time.sleep(1)
 
              profitloss += (sell - (1.0025 * purchase_total))
              lock.acquire()
@@ -241,20 +244,25 @@ def thread_work(coin, lock):
              PROFIT_MINUS_LOSS += (sell - (1.0025 * purchase_total))
              lock.release()
              trans_count += 1
-             purchase = 0
              purchase_total = 0
 
 
         elif bid_price[-1] <= (purchase * 0.996) and current_balance > 0  :
              sell = purchase_qty * bid_price[-1]
+             sell_dict = {'Coin': coin, 'OrderType':'LIMIT',\
+                     'Quantity': purchase_qty, 'Rate':ask_price[-1],\
+                     'TimeInEffect':'IMMEDIATE_OR_CANCEL', \
+                     'ConditionType': 'NONE', 'Target': 0}
+             http_request("sell", sell_dict, 'Post')
+             time.sleep(1)
              lock.acquire()
              profitloss += (sell - (1.0025 * purchase_total))
              LOSS += (sell - (1.0025 * purchase_total))
              PROFIT_MINUS_LOSS += (sell - (1.0025 * purchase_total))
              lock.release()
              trans_count += 1
-             purchase = 0
              purchase_total = 0
+
 
         hunter_dict = {'Coin': coin, 'Bid':bid_price[-1], 'Ask':ask_price[-1], 'Last':last_price[-1], 'Upper':stdupper,\
          'Lower':stdlower, 'Time':time_stamp, 'Transactions':trans_count,\
@@ -262,7 +270,7 @@ def thread_work(coin, lock):
         token = os.environ['SPLUNKTOKEN']
         print(hunter_dict)
         send_event("splunk", token, hunter_dict)
-        time.sleep(3)
+        time.sleep(4)
 
 
 if __name__ == "__main__":
