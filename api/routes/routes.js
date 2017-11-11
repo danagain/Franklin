@@ -22,14 +22,14 @@ const routes = () => {
   router.route("/api/balance/:currency").get((req, res) => {
     bittrex.getbalance({ currency: req.params.currency }, (data, err) => {
       if (err) {
-        print(req.body)
         loggingController.log({
           message: {
             info: err.message,
             headers: req.headers,
             body: req.body,
             method: req.method,
-            route: req.route.path
+            route: req.route.path,
+            market: req.params.currency
           },
           severity: "error"
         });
@@ -84,7 +84,13 @@ const routes = () => {
           res.status(500).send(err.message);
         } else {
           loggingController.log({
-            message: { info: data, headers: req.headers, body: req.body, method: req.method, route: req.route.path },
+            message: {
+              info: data,
+              headers: req.headers,
+              body: req.body,
+              method: req.method,
+              route: req.route.path
+            },
             severity: "info"
           });
           mongoClient.connect(mongoUrl, (err, db) => {
@@ -141,7 +147,13 @@ const routes = () => {
           res.status(500).send(err.message);
         } else {
           loggingController.log({
-            message: { info: data, body: req.body, headers: req.headers, method: req.method, route: req.route.path },
+            message: {
+              info: data,
+              body: req.body,
+              headers: req.headers,
+              method: req.method,
+              route: req.route.path
+            },
             severity: "info"
           });
           mongoClient.connect(mongoUrl, (err, db) => {
