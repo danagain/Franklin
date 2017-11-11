@@ -3,13 +3,8 @@ services:
   streamer:
     build: ./streamer
     restart: always
-    environment:
-      - MONGO=mongodb://mongo:27017/franklin
-      - BIT_API_KEY=357a911210354305a4d6993401a4e994
-      - BIT_API_SECRET=a42dd9a213d443bfb531f29909725a72
-      - SPLUNKTOKEN=00000000-0000-0000-0000-000000000000
-      - APP_ENV=docker
-      - TIMEINTERVAL=10
+    env_file:
+      - .env
     links:
       - mongo
       - splunk
@@ -17,23 +12,16 @@ services:
   hunter:
     build: ./hunter
     restart: always
-    environment:
-      - LOOP_SECONDS=3
-      - SPLUNKTOKEN=00000000-0000-0000-0000-000000000000
-      - APP_ENV=docker
-      - COLLECTION_MINUTES=15
+    env_file:
+      - .env
     links:
       - mongo
       - splunk
   web-api:
     build: ./api
     restart: always
-    environment:
-      - MONGO=mongodb://mongo:27017/franklin
-      - BIT_API_KEY=357a911210354305a4d6993401a4e994
-      - BIT_API_SECRET=a42dd9a213d443bfb531f29909725a72
-      - SPLUNKTOKEN=00000000-0000-0000-0000-000000000000
-      - APP_ENV=docker
+    env_file:
+      - .env
     links:
       - mongo
       - splunk
@@ -63,6 +51,3 @@ services:
       - "9997:9997"
       - "8088:8088"
       - "1514:1514"
-volumes:
-  opt-splunk-etc:
-  opt-splunk-var:
