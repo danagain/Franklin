@@ -1,28 +1,22 @@
 const request = require("supertest");
 const test = require("tape");
 const app = require("../api");
+const bodyParser = require("body-parser");
 
 console.log(
   "Running Integration Tests, Ensure Docker-Compose env is up and running."
 );
 
-const expectedCoins = [
+const expectedMarkets = [
   {
-    coins: [
+    markets: [
       "BTC-ETH",
       "BTC-NEO",
       "BTC-LTC",
       "BTC-BCC",
       "BTC-VTC",
       "BTC-OMG",
-      "BTC-DASH",
-      "BTC-XRP",
-      "BTC-TRST",
-      "BTC-ARK",
-      "BTC-XVG",
-      "BTC-EMC2",
-      "BTC-XVC",
-      "BTC-VOX"
+      "BTC-DASH"
     ]
   }
 ];
@@ -55,20 +49,20 @@ test("/api/balance/BTC be 200", t => {
       t.end();
     });
 });
-test("/api/coins be valid", t => {
+test("/api/markets be valid", t => {
   request(app)
-    .get("/api/coins")
+    .get("/api/markets")
     .expect("Content-Type", /json/)
     .expect(200)
     .end((err, res) => {
-      t.same(res.body, expectedCoins, "Coins as expected");
+      t.same(res.body, expectedMarkets, "Markets as expected");
       t.error(err, "No error");
       t.end();
     });
 });
 
-// Foreach of the Coins - Test endpoints with parameters
-expectedCoins[0].coins.forEach(item => {
+// Foreach of the Markets - Test endpoints with parameters
+expectedMarkets[0].markets.forEach(item => {
   test(`/api/bittrex/${item} contains valid data`, t => {
     request(app)
       .get(`/api/bittrex/${item}`)

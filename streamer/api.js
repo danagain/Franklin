@@ -15,7 +15,7 @@ const interval = process.env.TIMEINTERVAL * 1000;
 setInterval(() => {
   console.log(`Complete => Running in ${process.env.TIMEINTERVAL} seconds`);
 
-  request.get("http://web-api:3000/api/coins", (error, response) => {
+  request.get("http://web-api:3000/api/markets", (error, response) => {
     if (error) {
       loggingController.log({
         message: { info: error },
@@ -32,7 +32,7 @@ setInterval(() => {
         throw err;
       }
 
-      // Return array of market information for markets returned from /api/coins
+      // Return array of market information for markets returned from /api/markets
       const marketArray = data.result.filter(obj => {
         if (response.body.indexOf(obj.MarketName) === -1) {
           return false;
@@ -40,11 +40,11 @@ setInterval(() => {
         return true;
       });
 
-      marketArray.map(coin => {
+      marketArray.map(market => {
         request.post({
-          url: `http://web-api:3000/api/bittrex/${coin.MarketName}`,
+          url: `http://web-api:3000/api/bittrex/${market.MarketName}`,
           json: true,
-          body: coin
+          body: market
         });
       });
     });

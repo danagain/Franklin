@@ -2,6 +2,7 @@ const express = require("express");
 const bittrex = require("node-bittrex-api");
 const mongoClient = require("mongodb").MongoClient;
 const mongoController = require("../controllers/mongo");
+const requests = require("requests");
 const loggingController = require("../controllers/logger.js")();
 
 let mongoUrl;
@@ -40,11 +41,11 @@ const routes = () => {
     });
   });
 
-  router.route("/api/coins").get((req, res, next) => {
-    // This is where we change the coins we are working with - This is the ONLY place also :)
-    const coins = [
+  router.route("/api/markets").get((req, res, next) => {
+    // This is where we change the markets we are working with - This is the ONLY place also :)
+    const markets = [
       {
-        coins: [
+        markets: [
           "BTC-ETH",
           "BTC-NEO",
           "BTC-LTC",
@@ -55,7 +56,7 @@ const routes = () => {
         ]
       }
     ];
-    res.json(coins);
+    res.json(markets);
   });
 
   router.route("/api/buy/:currency").post((req, res, next) => {
@@ -94,12 +95,14 @@ const routes = () => {
             severity: "info"
           });
           mongoClient.connect(mongoUrl, (err, db) => {
-            const collection = db.collection(`buy-${req.params.currency}`);
+            const collection = db.collection(
+              `transactions-${req.params.currency}`
+            );
             mongoController
               .insertDocuments(collection, data)
               .then(data => {
-                res.json(data);
                 db.close();
+                res.json(data);
               })
               .catch(err => {
                 loggingController.log({
@@ -157,7 +160,9 @@ const routes = () => {
             severity: "info"
           });
           mongoClient.connect(mongoUrl, (err, db) => {
-            const collection = db.collection(`sell-${req.params.currency}`);
+            const collection = db.collection(
+              `transactions-${req.params.currency}`
+            );
             mongoController
               .insertDocuments(collection, data)
               .then(data => {
@@ -184,6 +189,107 @@ const routes = () => {
   });
 
   router
+    .route("/api/orders/:currency/:uuid")
+    .post((req, res, next) => {
+      requests.post(
+        `https://bittrex.com/api/v1.1/market/cancel?apikey=${process.env
+          .BIT_API_KEY}&uuid=${req.params.uuid}`,
+        (err, res) => {
+          if (err) {
+            loggingController.log({
+              message: {
+                info: err.message,
+                headers: req.headers,
+                uuid: req.params.uuid,
+                method: req.method,
+                route: req.route.path
+              },
+              severity: "error"
+            });
+            res.status(500).send(err.message);
+          } else {
+            mongoClient.connect(mongoUrl, (err, db) => {
+              if (err) {
+                loggingController.log({
+                  message: {
+                    info: err.message,
+                    headers: req.headers,
+                    uuid: req.params.uuid,
+                    method: req.method,
+                    route: req.route.path
+                  },
+                  severity: "error"
+                });
+                res.status(500).send(err.message);
+              }
+              const collection = db.collection(
+                `transactions-${req.params.currency}`
+              );
+              mongoController
+                .updateOrderStatus(collection, req.params.uuid)
+                .then(data => {
+                  db.close();
+                  res.json(data);
+                })
+                .catch(err => {
+                  loggingController.log({
+                    message: {
+                      info: err.message,
+                      headers: req.headers,
+                      uuid: req.params.uuid,
+                      body: req.params.currency,
+                      method: req.method,
+                      route: req.route.path
+                    },
+                    severity: "error"
+                  });
+                  res.status(500).json([{ error: err.message }]);
+                });
+            });
+          }
+        }
+      );
+    })
+    .get((req, res, next) => {
+      mongoClient.connect(mongoUrl, (err, db) => {
+        if (err) {
+          loggingController.log({
+            message: {
+              info: err.message,
+              headers: req.headers,
+              uuid: req.params.uuid,
+              method: req.method,
+              route: req.route.path
+            },
+            severity: "error"
+          });
+          res.status(500).send(err.message);
+        }
+        const collection = db.collection(`transactions-${req.params.currency}`);
+        mongoController
+          .findOrderStatus(collection, req.params.uuid)
+          .then(data => {
+            db.close();
+            res.json(data);
+          })
+          .catch(err => {
+            loggingController.log({
+              message: {
+                info: err.message,
+                headers: req.headers,
+                uuid: req.params.uuid,
+                body: req.params.currency,
+                method: req.method,
+                route: req.route.path
+              },
+              severity: "error"
+            });
+            res.status(500).json([{ error: err.message }]);
+          });
+      });
+    });
+
+  router
     .route("/api/bittrex/:currency")
     .post((req, res, next) => {
       mongoClient.connect(mongoUrl, (err, db) => {
@@ -191,8 +297,8 @@ const routes = () => {
         mongoController
           .insertDocuments(collection, req.body)
           .then(data => {
-            res.json(data);
             db.close();
+            res.json(data);
           })
           .catch(err => {
             loggingController.log({

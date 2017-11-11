@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node api.js",
     "lint": "eslint index.js routes/*.js test/*.js",
-    "test": "docker-compose build && docker-compose up -d && sleep 20 && BIT_API_KEY=1b64d15bace644849152c9e42f7091bc BIT_API_SECRET=5d392d3589004bf9988b72f10022c509 SPLUNKTOKEN=00000000-0000-0000-0000-000000000000 node ./test/api.integration.tests.js | tap-spec"
+    "test": "docker-compose build && docker-compose up -d && sleep 20 && BIT_API_KEY=1b64d15bace644849152c9e42f7091bc BIT_API_SECRET=5d392d3589004bf9988b72f10022c509 SPLUNKTOKEN=00000000-0000-0000-0000-000000000000 node ./test/api.integration.test.js | tap-spec",
+    "dbunit": "node test/mockInsert.test.js && node test/mockUpdate.test.js && node test/mockSearch.test.js "
   },
   "author": "",
   "license": "ISC",
@@ -15,6 +16,7 @@
     "express": "^4.16.2",
     "mongodb": "^2.2.33",
     "node-bittrex-api": "^0.7.6",
+    "requests": "^0.2.2",
     "splunk-logging": "^0.9.3"
   },
   "devDependencies": {
