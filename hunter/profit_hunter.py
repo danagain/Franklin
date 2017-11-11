@@ -125,7 +125,9 @@ def http_request(ptype, python_dict, method):
         if method == 'Post':
             requests.post(endpoint_url, data=jsondata, headers=headers)
         if method == 'Get':
-            return requests.get(endpoint_url)
+            r = requests.get(endpoint_url)
+            x = r.json()
+            return x
     except requests.exceptions.RequestException as error:
         print(error)
         sys.exit(1)
@@ -204,6 +206,8 @@ def thread_work(coin, lock):
         last_price, stdupper,\
         stdlower, time_stamp, bid_price, ask_price = get_data(coin)
         balance_return = http_request('Balance', split_market_dict, 'Get')
+        result_return = balance_return['result']
+        current_balance = result_return['Balance']
         print(balance_return)
         # If the current price has fallen below our threshold, it's time to buy
         if bid_price[-1] < (0.999*stdlower) and current_balance == 0 and \
