@@ -146,7 +146,7 @@ def get_coins():
         endpoint_url = 'http://web-api:3000/api/markets'
         resp = requests.get(url=endpoint_url)
         data = json.loads(resp.text)
-        data = data[0]["coins"]
+        data = data[0]["markets"]
         if data is None:
             print("No coins selected in API, Hunter quiting")
             sys.exit(1)

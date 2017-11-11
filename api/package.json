@@ -16,7 +16,7 @@
     "express": "^4.16.2",
     "mongodb": "^2.2.33",
     "node-bittrex-api": "^0.7.6",
-    "requests": "^0.2.2",
+    "request": "^2.83.0",
     "splunk-logging": "^0.9.3"
   },
   "devDependencies": {

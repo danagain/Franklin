@@ -2,7 +2,7 @@ const express = require("express");
 const bittrex = require("node-bittrex-api");
 const mongoClient = require("mongodb").MongoClient;
 const mongoController = require("../controllers/mongo");
-const requests = require("requests");
+const request = require("request");
 const loggingController = require("../controllers/logger.js")();
 
 let mongoUrl;
@@ -34,7 +34,7 @@ const routes = () => {
           },
           severity: "error"
         });
-        res.status(500).send(err.message);
+        res.status(500).json(err.message);
       } else {
         res.json(data);
       }
@@ -189,104 +189,24 @@ const routes = () => {
   });
 
   router
-    .route("/api/orders/:currency/:uuid")
+    .route("/api/orders/:currency")
     .post((req, res, next) => {
-      requests.post(
-        `https://bittrex.com/api/v1.1/market/cancel?apikey=${process.env
-          .BIT_API_KEY}&uuid=${req.params.uuid}`,
-        (err, res) => {
-          if (err) {
-            loggingController.log({
-              message: {
-                info: err.message,
-                headers: req.headers,
-                uuid: req.params.uuid,
-                method: req.method,
-                route: req.route.path
-              },
-              severity: "error"
-            });
-            res.status(500).send(err.message);
-          } else {
-            mongoClient.connect(mongoUrl, (err, db) => {
-              if (err) {
-                loggingController.log({
-                  message: {
-                    info: err.message,
-                    headers: req.headers,
-                    uuid: req.params.uuid,
-                    method: req.method,
-                    route: req.route.path
-                  },
-                  severity: "error"
-                });
-                res.status(500).send(err.message);
-              }
-              const collection = db.collection(
-                `transactions-${req.params.currency}`
-              );
-              mongoController
-                .updateOrderStatus(collection, req.params.uuid)
-                .then(data => {
-                  db.close();
-                  res.json(data);
-                })
-                .catch(err => {
-                  loggingController.log({
-                    message: {
-                      info: err.message,
-                      headers: req.headers,
-                      uuid: req.params.uuid,
-                      body: req.params.currency,
-                      method: req.method,
-                      route: req.route.path
-                    },
-                    severity: "error"
-                  });
-                  res.status(500).json([{ error: err.message }]);
-                });
-            });
-          }
-        }
+      bittrex.sendCustomRequest(
+        "https://bittrex.com/api/v1.1/account/getbalances?currency=BTC",
+        function(data, err) {
+          console.log(data);
+        },
+        true
       );
     })
     .get((req, res, next) => {
-      mongoClient.connect(mongoUrl, (err, db) => {
-        if (err) {
-          loggingController.log({
-            message: {
-              info: err.message,
-              headers: req.headers,
-              uuid: req.params.uuid,
-              method: req.method,
-              route: req.route.path
-            },
-            severity: "error"
-          });
-          res.status(500).send(err.message);
-        }
-        const collection = db.collection(`transactions-${req.params.currency}`);
-        mongoController
-          .findOrderStatus(collection, req.params.uuid)
-          .then(data => {
-            db.close();
-            res.json(data);
-          })
-          .catch(err => {
-            loggingController.log({
-              message: {
-                info: err.message,
-                headers: req.headers,
-                uuid: req.params.uuid,
-                body: req.params.currency,
-                method: req.method,
-                route: req.route.path
-              },
-              severity: "error"
-            });
-            res.status(500).json([{ error: err.message }]);
-          });
-      });
+      bittrex.sendCustomRequest(
+        "https://bittrex.com/api/v1.1/account/getbalances?currency=BTC",
+        function(data, err) {
+          console.log(data);
+        },
+        true
+      );
     });
 
   router
