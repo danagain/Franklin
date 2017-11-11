@@ -27,6 +27,7 @@ const routes = () => {
           message: {
             info: err.message,
             headers: req.headers,
+            body: req.body,
             method: req.method,
             route: req.route.path
           },
@@ -74,6 +75,7 @@ const routes = () => {
             message: {
               info: err.message,
               headers: req.headers,
+              body: req.body,
               method: req.method,
               route: req.route.path
             },
@@ -82,7 +84,7 @@ const routes = () => {
           res.status(500).send(err.message);
         } else {
           loggingController.log({
-            message: { info: data, headers: req.headers, method: req.method, route: req.route.path },
+            message: { info: data, headers: req.headers, body: req.body, method: req.method, route: req.route.path },
             severity: "info"
           });
           mongoClient.connect(mongoUrl, (err, db) => {
@@ -98,6 +100,7 @@ const routes = () => {
                   message: {
                     info: err.message,
                     headers: req.headers,
+                    body: req.body,
                     method: req.method,
                     route: req.route.path
                   },
@@ -129,6 +132,7 @@ const routes = () => {
             message: {
               info: err.message,
               headers: req.headers,
+              body: req.body,
               method: req.method,
               route: req.route.path
             },
@@ -137,7 +141,7 @@ const routes = () => {
           res.status(500).send(err.message);
         } else {
           loggingController.log({
-            message: { info: data, headers: req.headers, method: req.method, route: req.route.path },
+            message: { info: data, body: req.body, headers: req.headers, method: req.method, route: req.route.path },
             severity: "info"
           });
           mongoClient.connect(mongoUrl, (err, db) => {
@@ -153,6 +157,7 @@ const routes = () => {
                   message: {
                     info: err.message,
                     headers: req.headers,
+                    body: req.body,
                     method: req.method,
                     route: req.route.path
                   },
@@ -182,6 +187,7 @@ const routes = () => {
               message: {
                 info: err.message,
                 headers: req.headers,
+                body: req.body,
                 method: req.method,
                 route: req.route.path
               },
@@ -207,6 +213,7 @@ const routes = () => {
               message: {
                 info: err.message,
                 headers: req.headers,
+                body: req.body,
                 method: req.method,
                 route: req.route.path
               },

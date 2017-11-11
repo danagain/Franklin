@@ -247,7 +247,7 @@ def thread_work(coin, lock):
              purchase_total = 0
 
 
-        elif bid_price[-1] <= (purchase * 0.996) and current_balance > 0  :
+        elif bid_price[-1] <= (purchase * 0.996) and current_balance > 0:
              sell = purchase_qty * bid_price[-1]
              sell_dict = {'Coin': coin, 'OrderType':'LIMIT',\
                      'Quantity': purchase_qty, 'Rate':ask_price[-1],\
