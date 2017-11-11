@@ -245,7 +245,7 @@ def thread_work(coin, lock):
              purchase_total = 0
 
 
-        elif bid_price[-1] <= (purchase * 0.996) and current_balance is not None:
+        elif bid_price[-1] <= (purchase * 0.996) and current_balance > 0:
              sell = purchase_qty * bid_price[-1]
              lock.acquire()
              profitloss += (sell - (1.0025 * purchase_total))
