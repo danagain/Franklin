@@ -205,12 +205,12 @@ def thread_work(coin, lock):
     split_market = coin.split('-')
     split_market = split_market[-1]
     split_market_dict = {'Coin':split_market}
-    current_balance = None
+    current_balance = 0
     while True:
         last_price, stdupper,\
         stdlower, time_stamp, bid_price, ask_price = get_data(coin)
         # If the current price has fallen below our threshold, it's time to buy
-        if bid_price[-1] < (0.999*stdlower) and current_balance is None and \
+        if bid_price[-1] < (0.999*stdlower) and (current_balance is None or current_balance == 0) and \
                         stdupper >= (ask_price[-1] * 1.0025):
             purchase = bid_price[-1]
             purchase_qty = ((BTC_PER_PURCHASE + profitloss) / bid_price[-1])
@@ -227,7 +227,7 @@ def thread_work(coin, lock):
             result_return = balance_return['result']
             current_balance = result_return['Balance']
 
-        elif ask_price[-1] >= (1.004 * purchase) and current_balance is not None:
+        elif ask_price[-1] >= (1.004 * purchase) and current_balance > 0:
              sell = purchase_qty * ask_price[-1]
              sell_dict = {'Coin': coin, 'OrderType':'LIMIT',\
                     'Quantity': purchase_qty, 'Rate':ask_price[-1],\
@@ -242,7 +242,6 @@ def thread_work(coin, lock):
              lock.release()
              trans_count += 1
              purchase = 0
-             purchase_qty = 0
              purchase_total = 0
 
 
@@ -255,7 +254,6 @@ def thread_work(coin, lock):
              lock.release()
              trans_count += 1
              purchase = 0
-             purchase_qty = 0
              purchase_total = 0
 
         hunter_dict = {'Coin': coin, 'Bid':bid_price[-1], 'Ask':ask_price[-1], 'Last':last_price[-1], 'Upper':stdupper,\
