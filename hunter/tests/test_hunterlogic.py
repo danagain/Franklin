@@ -14,3 +14,8 @@ class GetDataTest(unittest.TestCase):
         qty = 0.35723895723985789325798327 #an amount longer than required
         qty = round(qty, 8)
         self.assertEqual(0.35723896, qty)
+
+    def test_string_split(self):
+        market = 'BTC-ETH'
+        coin = market.split('-')
+        self.assertEqual(coin[-1], 'ETH')
