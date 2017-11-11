@@ -259,7 +259,7 @@ def thread_work(coin, lock):
 if __name__ == "__main__":
     print("Waiting for correct amount of data")
     #time_for_data = COLLECTION_MINUTES * 60
-    time.sleep(15)
+    time.sleep(900)
     #time.sleep(time_for_data)
     COINS = get_coins() # Get all of the coins from the WEB-API
     # Add 15 min wait here for profit testing phase

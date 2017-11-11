@@ -46,20 +46,7 @@ const routes = () => {
     const coins = [
       {
         coins: [
-          "BTC-ETH",
-          "BTC-NEO",
-          "BTC-LTC",
-          "BTC-BCC",
-          "BTC-VTC",
-          "BTC-OMG",
-          "BTC-DASH",
-          "BTC-XRP",
-          "BTC-TRST",
-          "BTC-ARK",
-          "BTC-XVG",
-          "BTC-EMC2",
-          "BTC-XVC",
-          "BTC-VOX"
+          "BTC-ETH"
         ]
       }
     ];

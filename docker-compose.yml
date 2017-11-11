@@ -5,8 +5,8 @@ services:
     restart: always
     environment:
       - MONGO=mongodb://mongo:27017/franklin
-      - BIT_API_KEY=1b64d15bace644849152c9e42f7091bc
-      - BIT_API_SECRET=5d392d3589004bf9988b72f10022c509
+      - BIT_API_KEY=357a911210354305a4d6993401a4e994
+      - BIT_API_SECRET=a42dd9a213d443bfb531f29909725a72
       - SPLUNKTOKEN=00000000-0000-0000-0000-000000000000
       - APP_ENV=docker
       - TIMEINTERVAL=10
