@@ -223,7 +223,7 @@ def thread_work(coin, lock):
 
             http_request("buy", purchase_dict, 'Post')
 
-        elif ask_price[-1] >= (1.004 * purchase) and current_balance not None:
+        elif ask_price[-1] >= (1.004 * purchase) and current_balance > 0:
              sell = purchase_qty * ask_price[-1]
              profitloss += (sell - (1.0025 * purchase_total))
              lock.acquire()
@@ -235,7 +235,7 @@ def thread_work(coin, lock):
              purchase_qty = 0
              purchase_total = 0
 
-        elif bid_price[-1] <= (purchase * 0.996) and current_balance not None:
+        elif bid_price[-1] <= (purchase * 0.996) and current_balance > 0:
              sell = purchase_qty * bid_price[-1]
              lock.acquire()
              profitloss += (sell - (1.0025 * purchase_total))
