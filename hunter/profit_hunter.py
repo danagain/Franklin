@@ -210,7 +210,7 @@ def thread_work(coin, lock):
         current_balance = result_return['Balance']
         print(balance_return)
         # If the current price has fallen below our threshold, it's time to buy
-        if bid_price[-1] < (0.999*stdlower) and current_balance == 0 and \
+        if bid_price[-1] < (0.999*stdlower) and current_balance is None and \
                         stdupper >= (ask_price[-1] * 1.0025):
             purchase = bid_price[-1]
             purchase_qty = ((BTC_PER_PURCHASE + profitloss) / bid_price[-1])
@@ -223,7 +223,7 @@ def thread_work(coin, lock):
 
             http_request("buy", purchase_dict, 'Post')
 
-        elif ask_price[-1] >= (1.004 * purchase) and current_balance != 0:
+        elif ask_price[-1] >= (1.004 * purchase) and current_balance not None:
              sell = purchase_qty * ask_price[-1]
              profitloss += (sell - (1.0025 * purchase_total))
              lock.acquire()
@@ -235,7 +235,7 @@ def thread_work(coin, lock):
              purchase_qty = 0
              purchase_total = 0
 
-        elif bid_price[-1] <= (purchase * 0.996) and current_balance != 0:
+        elif bid_price[-1] <= (purchase * 0.996) and current_balance not None:
              sell = purchase_qty * bid_price[-1]
              lock.acquire()
              profitloss += (sell - (1.0025 * purchase_total))
