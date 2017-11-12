@@ -188,26 +188,50 @@ const routes = () => {
     );
   });
 
-  router
-    .route("/api/orders/:currency")
-    .post((req, res, next) => {
-      bittrex.sendCustomRequest(
-        "https://bittrex.com/api/v1.1/account/getbalances?currency=BTC",
-        function(data, err) {
-          console.log(data);
-        },
-        true
-      );
-    })
-    .get((req, res, next) => {
-      bittrex.sendCustomRequest(
-        "https://bittrex.com/api/v1.1/account/getbalances?currency=BTC",
-        function(data, err) {
-          console.log(data);
-        },
-        true
-      );
-    });
+  router.route("/api/orders/:uuid").post((req, res, next) => {
+    bittrex.sendCustomRequest(
+      `https://bittrex.com/api/v1.1/market/cancel?apikey=${process.env.BIT_API_KEY}&uuid=${req.params.uuid}`,
+      (data, err) => {
+        if (err) {
+          loggingController.log({
+            message: {
+              info: err.message,
+              headers: req.headers,
+              uuid: req.params.uuid,
+              method: req.method,
+              route: req.route.path
+            },
+            severity: "error"
+          });
+          res.status(500).send(err.message);
+        }
+        res.json(data);
+      },
+      true
+    );
+  });
+  router.route("/api/orders/:currency").get((req, res, next) => {
+    bittrex.sendCustomRequest(
+      `https://bittrex.com/api/v1.1/market/getopenorders?apikey=${process.env.BIT_API_KEY}&market=${req.params.currency}`,
+      (data, err) => {
+        if (err) {
+          loggingController.log({
+            message: {
+              info: err.message,
+              headers: req.headers,
+              currency: req.params.currency,
+              method: req.method,
+              route: req.route.path
+            },
+            severity: "error"
+          });
+          res.status(500).send(err.message);
+        }
+        res.json(data);
+      },
+      true
+    );
+  });
 
   router
     .route("/api/bittrex/:currency")
