@@ -7,6 +7,8 @@ console.log(
   "Running Integration Tests, Ensure Docker-Compose env is up and running."
 );
 
+const mockedUUID = "e606d53c-8d70-11e3-94b5-425861b86ab6"
+
 const expectedMarkets = [
   {
     markets: [
@@ -39,16 +41,6 @@ test("/api should 404", t => {
       t.end();
     });
 });
-test("/api/balance/BTC be 200", t => {
-  request(app)
-    .get("/api/balance/BTC")
-    .expect("Content-Type", /json/)
-    .expect(200)
-    .end((err, res) => {
-      t.error(err, "No error");
-      t.end();
-    });
-});
 test("/api/markets be valid", t => {
   request(app)
     .get("/api/markets")
@@ -60,9 +52,44 @@ test("/api/markets be valid", t => {
       t.end();
     });
 });
+test(`/api/cancel/${mockedUUID} be valid`, t => {
+  request(app)
+    .post(`/api/cancel/${mockedUUID}`)
+    .expect("Content-Type", /json/)
+    .expect(200)
+    .end((err, res) => {
+      t.same(res.body, 'INVALID_ORDER', "Cancel UUID working as expected");
+      t.end();
+    });
+});
 
 // Foreach of the Markets - Test endpoints with parameters
 expectedMarkets[0].markets.forEach(item => {
+
+  // Getting the currency from the market string
+  const currency = item.split('-')[1]
+
+  test(`/api/balance/${currency} be 200`, t => {
+    request(app)
+      .get(`/api/balance/${currency}`)
+      .expect("Content-Type", /json/)
+      .expect(200)
+      .end((err, res) => {
+        t.error(err, "No error");
+        t.end();
+      });
+  });
+  test(`/api/orders/${item} be valid`, t => {
+    request(app)
+      .get(`/api/orders/${item}`)
+      .expect("Content-Type", /json/)
+      .expect(200)
+      .end((err, res) => {
+        t.same(res.body.success, true, "Get ALL open orders for a specific market");
+        t.error(err, "No error");
+        t.end();
+      });
+  });
   test(`/api/bittrex/${item} contains valid data`, t => {
     request(app)
       .get(`/api/bittrex/${item}`)

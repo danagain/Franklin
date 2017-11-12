@@ -82,7 +82,7 @@ const routes = () => {
             },
             severity: "error"
           });
-          res.status(500).send(err.message);
+          res.status(500).json(err.message);
         } else {
           loggingController.log({
             message: {
@@ -147,7 +147,7 @@ const routes = () => {
             },
             severity: "error"
           });
-          res.status(500).send(err.message);
+          res.status(500).json(err.message);
         } else {
           loggingController.log({
             message: {
@@ -188,9 +188,10 @@ const routes = () => {
     );
   });
 
-  router.route("/api/orders/:uuid").post((req, res, next) => {
+  router.route("/api/cancel/:uuid").post((req, res, next) => {
     bittrex.sendCustomRequest(
-      `https://bittrex.com/api/v1.1/market/cancel?apikey=${process.env.BIT_API_KEY}&uuid=${req.params.uuid}`,
+      `https://bittrex.com/api/v1.1/market/cancel?apikey=${process.env
+        .BIT_API_KEY}&uuid=${req.params.uuid}`,
       (data, err) => {
         if (err) {
           loggingController.log({
@@ -203,16 +204,18 @@ const routes = () => {
             },
             severity: "error"
           });
-          res.status(500).send(err.message);
-        }
+          res.status(500).json(err.message);
+        } else {
         res.json(data);
+        }
       },
       true
     );
   });
   router.route("/api/orders/:currency").get((req, res, next) => {
     bittrex.sendCustomRequest(
-      `https://bittrex.com/api/v1.1/market/getopenorders?apikey=${process.env.BIT_API_KEY}&market=${req.params.currency}`,
+      `https://bittrex.com/api/v1.1/market/getopenorders?apikey=${process.env
+        .BIT_API_KEY}&market=${req.params.currency}`,
       (data, err) => {
         if (err) {
           loggingController.log({
@@ -225,9 +228,10 @@ const routes = () => {
             },
             severity: "error"
           });
-          res.status(500).send(err.message);
-        }
+          res.status(500).json(err.message);
+        } else {
         res.json(data);
+        }
       },
       true
     );
