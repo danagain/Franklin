@@ -2,7 +2,6 @@ const express = require("express");
 const bittrex = require("node-bittrex-api");
 const mongoClient = require("mongodb").MongoClient;
 const mongoController = require("../controllers/mongo");
-const request = require("request");
 const loggingController = require("../controllers/logger.js")();
 
 let mongoUrl;
@@ -11,6 +10,7 @@ if (process.env.APP_ENV) {
 } else {
   mongoUrl = "mongodb://localhost:27017/franklin";
 }
+
 
 bittrex.options({
   apikey: process.env.BIT_API_KEY,
