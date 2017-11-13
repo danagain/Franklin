@@ -1,34 +1,17 @@
 const request = require("supertest");
 const test = require("tape");
 const app = require("../api");
-const bodyParser = require("body-parser");
+const mocks = require("./mockedObjects");
 
 console.log(
   "Running Integration Tests, Ensure Docker-Compose env is up and running."
 );
-
-const mockedUUID = "e606d53c-8d70-11e3-94b5-425861b86ab6"
-
-const expectedMarkets = [
-  {
-    markets: [
-      "BTC-ETH",
-      "BTC-NEO",
-      "BTC-LTC",
-      "BTC-BCC",
-      "BTC-VTC",
-      "BTC-OMG",
-      "BTC-DASH"
-    ]
-  }
-];
 
 test("/ should 404", t => {
   request(app)
     .get("/")
     .expect(404)
     .end((err, res) => {
-      t.error(err, "No error");
       t.end();
     });
 });
@@ -37,7 +20,6 @@ test("/api should 404", t => {
     .get("/api")
     .expect(404)
     .end((err, res) => {
-      t.error(err, "No error");
       t.end();
     });
 });
@@ -47,27 +29,49 @@ test("/api/markets be valid", t => {
     .expect("Content-Type", /json/)
     .expect(200)
     .end((err, res) => {
-      t.same(res.body, expectedMarkets, "Markets as expected");
-      t.error(err, "No error");
+      t.same(res.body, mocks.expectedMarkets, "Markets as expected");
       t.end();
     });
 });
-test(`/api/cancel/${mockedUUID} be valid`, t => {
+test(`/api/cancel/${mocks.mockedUUID} be valid`, t => {
   request(app)
-    .post(`/api/cancel/${mockedUUID}`)
+    .post(`/api/cancel/${mocks.mockedUUID}`)
     .expect("Content-Type", /json/)
     .expect(200)
     .end((err, res) => {
-      t.same(res.body, 'INVALID_ORDER', "Cancel UUID working as expected");
+      t.same(res.body, "INVALID_ORDER", "Cancel UUID working as expected");
+      t.end();
+    });
+});
+
+test(`/api/buy/BTC-ETH return INSUFFIENT FUNDS`, t => {
+  request(app)
+    .post("/api/buy/BTC-ETH")
+    .send(mocks.mockedOrder)
+    .expect("Content-Type", /json/)
+    .expect(200)
+    .end((err, res) => {
+      t.same(res.body, "INSUFFICIENT_FUNDS", "INSUFFIENT FUNDS for BUY Orders");
+      t.end();
+    });
+});
+
+test(`/api/sell/BTC-ETH return INSUFFIENT FUNDS`, t => {
+  request(app)
+    .post("/api/sell/BTC-ETH")
+    .send(mocks.mockedOrder)
+    .expect("Content-Type", /json/)
+    .expect(200)
+    .end((err, res) => {
+      t.same(res.body, "INSUFFICIENT_FUNDS", "INSUFFIENT FUNDS for SELL Orders");
       t.end();
     });
 });
 
 // Foreach of the Markets - Test endpoints with parameters
-expectedMarkets[0].markets.forEach(item => {
-
+mocks.expectedMarkets[0].markets.forEach(item => {
   // Getting the currency from the market string
-  const currency = item.split('-')[1]
+  const currency = item.split("-")[1];
 
   test(`/api/balance/${currency} be 200`, t => {
     request(app)
@@ -75,7 +79,11 @@ expectedMarkets[0].markets.forEach(item => {
       .expect("Content-Type", /json/)
       .expect(200)
       .end((err, res) => {
-        t.error(err, "No error");
+        t.same(
+          res.body.success,
+          true,
+          "Get Balance for all coins"
+        );
         t.end();
       });
   });
@@ -85,8 +93,12 @@ expectedMarkets[0].markets.forEach(item => {
       .expect("Content-Type", /json/)
       .expect(200)
       .end((err, res) => {
-        t.same(res.body.success, true, "Get ALL open orders for a specific market");
-        t.error(err, "No error");
+        t.same(
+          res.body.success,
+          true,
+          "Get ALL open orders for a specific market"
+        );
+
         t.end();
       });
   });
@@ -99,7 +111,7 @@ expectedMarkets[0].markets.forEach(item => {
         const sampleData = res.body[0];
 
         t.same(sampleData.MarketName, item, `api bittrex data for ${item}`);
-        t.error(err, "No error");
+
         t.end();
       });
   });
@@ -116,7 +128,6 @@ expectedMarkets[0].markets.forEach(item => {
           2,
           `value return amount for query string ${item}`
         );
-        t.error(err, "No error");
         t.end();
       });
   });
