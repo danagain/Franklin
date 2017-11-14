@@ -13,10 +13,15 @@ import numpy as np
 import urllib.request
 import ssl
 
+# Loop/Based Settings
 LOOP_SECONDS = int(os.environ['LOOP_SECONDS'])
 COLLECTION_MINUTES = int(os.environ['COLLECTION_MINUTES'])
 DATACOUNT = COLLECTION_MINUTES * (60/LOOP_SECONDS)
+
+# For talking with Splunk Container
 ssl._create_default_https_context = ssl._create_unverified_context
+
+# Init Settings in relation to profits/loss
 BTC_PER_PURCHASE = 0.00060000
 PROFIT = 0.00000000
 LOSS = 0.00000000
@@ -125,22 +130,23 @@ def http_request(ptype, python_dict, method):
         if method == 'Post':
             requests.post(endpoint_url, data=jsondata, headers=headers)
         if method == 'Get':
+            r = requests.get(endpoint_url)
             try:
-                r = requests.get(endpoint_url)
                 x = r.json()
                 return x
             except ValueError:  # includes simplejson.decoder.JSONDecodeError
-                print("JSON ERROR")
+                x = r.text #return the value in text if there was a JSON decode error
+                return x
     except requests.exceptions.RequestException as error:
         print(error)
         sys.exit(1)
 
-def get_coins():
+def get_markets():
     """
     This is the first function that is called as the hunter runs,
     this function makes a call to the WEB-API to determine which stocks
     are going to be hunted
-    @return data: Returns a list of coins returned from the WEB-API
+    @return data: Returns a list of markets returned from the WEB-API
     """
     try:
         endpoint_url = 'http://web-api:3000/api/markets'
@@ -148,7 +154,7 @@ def get_coins():
         data = json.loads(resp.text)
         data = data[0]["markets"]
         if data is None:
-            print("No coins selected in API, Hunter quiting")
+            print("No Markets selected in API, Hunter quiting")
             sys.exit(1)
         else:
             return data
@@ -270,15 +276,15 @@ if __name__ == "__main__":
     #time_for_data = COLLECTION_MINUTES * 60
     time.sleep(10)
     #time.sleep(time_for_data)
-    COINS = get_coins() # Get all of the coins from the WEB-API
+    markets = get_markets() # Get all of the markets from the WEB-API
     # Add 15 min wait here for profit testing phase
     THREADS = []
 
-    for c in range(0, len(COINS)):
-        t = MyThread(COINS[c])
+    for c in range(0, len(markets)):
+        t = MyThread(markets[c])
         t.setDaemon(True)
         THREADS.append(t)
-    for i in range(0, len(COINS)):
+    for i in range(0, len(markets)):
         THREADS[i].start()
         time.sleep(2)
     while threading.active_count() > 0:

@@ -10,7 +10,7 @@ const app = express();
 app.use(bodyParser.json());
 
 // Routes
-app.use("/", router);
+app.use("/api", router);
 
 // Catch all 404's
 app.get("*", (req, res) => {

@@ -20,7 +20,7 @@ bittrex.options({
 const routes = () => {
   const router = express.Router();
 
-  router.route("/api/balance/:currency").get((req, res) => {
+  router.route("/balance/:currency").get((req, res) => {
     bittrex.getbalance({ currency: req.params.currency }, (data, err) => {
       if (err) {
         loggingController.log({
@@ -40,8 +40,7 @@ const routes = () => {
       }
     });
   });
-
-  router.route("/api/markets").get((req, res, next) => {
+  router.route("/markets").get((req, res, next) => {
     // This is where we change the markets we are working with - This is the ONLY place also :)
     const markets = [
       {
@@ -58,8 +57,7 @@ const routes = () => {
     ];
     res.json(markets);
   });
-
-  router.route("/api/buy/:currency").post((req, res, next) => {
+  router.route("/buy/:currency").post((req, res, next) => {
     bittrex.tradebuy(
       {
         MarketName: req.params.currency,
@@ -123,8 +121,7 @@ const routes = () => {
       }
     );
   });
-
-  router.route("/api/sell/:currency").post((req, res, next) => {
+  router.route("/sell/:currency").post((req, res, next) => {
     bittrex.tradesell(
       {
         MarketName: req.params.currency,
@@ -187,8 +184,7 @@ const routes = () => {
       }
     );
   });
-
-  router.route("/api/cancel/:uuid").post((req, res, next) => {
+  router.route("/cancel/:uuid").post((req, res, next) => {
     bittrex.sendCustomRequest(
       `https://bittrex.com/api/v1.1/market/cancel?apikey=${process.env
         .BIT_API_KEY}&uuid=${req.params.uuid}`,
@@ -212,7 +208,7 @@ const routes = () => {
       true
     );
   });
-  router.route("/api/orders/:currency").get((req, res, next) => {
+  router.route("/orders/:currency").get((req, res, next) => {
     bittrex.sendCustomRequest(
       `https://bittrex.com/api/v1.1/market/getopenorders?apikey=${process.env
         .BIT_API_KEY}&market=${req.params.currency}`,
@@ -236,10 +232,7 @@ const routes = () => {
       true
     );
   });
-
-  router
-    .route("/api/bittrex/:currency")
-    .post((req, res, next) => {
+  router.route("/bittrex/:currency").post((req, res, next) => {
       mongoClient.connect(mongoUrl, (err, db) => {
         const collection = db.collection(req.params.currency);
         mongoController
