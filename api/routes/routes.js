@@ -178,7 +178,7 @@ const routes = () => {
       }
     );
   });
-  router.route("/cancel/:uuid").post((req, res, next) => {
+  router.route("/cancel/:uuid").get((req, res, next) => {
     bittrex.sendCustomRequest(
       `https://bittrex.com/api/v1.1/market/cancel?apikey=${process.env
         .BIT_API_KEY}&uuid=${req.params.uuid}`,

@@ -23,7 +23,7 @@ class Bittrex:
         @param coin: The stock/market
         """
         balance_return = self.apicall.http_request('Balance', self.coin, 'Get')
-        if len(balance_return) >= 1:
+        if  balance_return is not None and balance_return is not str:
             result_return = balance_return['result']
             current_balance = result_return['Balance']
             return current_balance
