@@ -23,9 +23,10 @@ class Bittrex:
         @param coin: The stock/market
         """
         balance_return = self.apicall.http_request('Balance', self.coin, 'Get')
-        result_return = balance_return['result']
-        current_balance = result_return['Balance']
-        return current_balance
+        if len(balance_return) >= 1:
+            result_return = balance_return['result']
+            current_balance = result_return['Balance']
+            return current_balance
 
 
     def place_buy_order(self, qty, price):

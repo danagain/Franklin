@@ -27,5 +27,7 @@ class GetDataTest(unittest.TestCase):
         self.assertEqual(coin[-1], 'ETH')
 
     def test_get_uuid(self):
-        coin = {"Coin":'BTC-ETH'}
-        self.bittrex.cancel_order(coin)
+        get_uuid = {"success":True,"message":"","result":[{"Uuid":None,"OrderUuid":"2ae79492-8cf9-4e0f-9546-22d6bc9f160f","Exchange":"BTC-ETH","OrderType":"LIMIT_SELL","Quantity":0.0276776,"QuantityRemaining":0.0276776,"Limit":0.04358533,"CommissionPaid":0,"Price":0,"PricePerUnit":None,"Opened":"2017-11-16T09:09:37.907","Closed":None,"CancelInitiated":False,"ImmediateOrCancel":False,"IsConditional":False,"Condition":"NONE","ConditionTarget":None}]}
+        result_return = get_uuid['result'] #get the uuid from the returned request
+        uuid = {'Coin':result_return[0]['OrderUuid']} #store into a dictionary
+        self.assertEqual(uuid['Coin'], "2ae79492-8cf9-4e0f-9546-22d6bc9f160f")
