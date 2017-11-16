@@ -156,9 +156,8 @@ def thread_work(market, lock):
 
     """
     bittrex = Bittrex(market)#create an instance of the Bittrex class
-    current_state = "NoBuy"#init the current balance variable to NoBuy
+    current_state = "NoBuy"#init the current state variable to NoBuy
     price = 0#variable to keep track of what price we are buying shares at
-    relist_price = 0#variable to keep track of our re list price for stop losses
     while True:
         #Request the latest data each loop
         last_price, stdupper,\
@@ -169,7 +168,7 @@ def thread_work(market, lock):
                         qty = BTC_PER_PURCHASE / last_price[-1]
                         price = last_price[-1]
                         current_state = bittrex.place_buy_order(qty, price)
-        #if balance variable is one then an order has been sucessfully filled and we now need to
+        #if state variable is ActiveBuy then an order has been sucessfully filled and we now need to
         #place an immediate sell order at our desired profit margin
         if  current_state == "ActiveBuy":
             sell_goal = price * 1.006 #sell for a 0.1% profit
