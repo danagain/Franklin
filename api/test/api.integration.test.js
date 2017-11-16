@@ -39,11 +39,10 @@ test(`/api/cancel/${mocks.mockedUUID} be valid`, t => {
     .expect("Content-Type", /json/)
     .expect(200)
     .end((err, res) => {
-      t.same(res.body, "INVALID_ORDER", "Cancel UUID working as expected");
+      t.same(res.body, {}, "Cancel UUID working as expected");
       t.end();
     });
 });
-
 test(`/api/buy/BTC-ETH return INSUFFIENT FUNDS`, t => {
   request(app)
     .post("/api/buy/BTC-ETH")
@@ -55,7 +54,6 @@ test(`/api/buy/BTC-ETH return INSUFFIENT FUNDS`, t => {
       t.end();
     });
 });
-
 test(`/api/sell/BTC-ETH return INSUFFIENT FUNDS`, t => {
   request(app)
     .post("/api/sell/BTC-ETH")
@@ -63,7 +61,11 @@ test(`/api/sell/BTC-ETH return INSUFFIENT FUNDS`, t => {
     .expect("Content-Type", /json/)
     .expect(200)
     .end((err, res) => {
-      t.same(res.body, "INSUFFICIENT_FUNDS", "INSUFFIENT FUNDS for SELL Orders");
+      t.same(
+        res.body,
+        "INSUFFICIENT_FUNDS",
+        "INSUFFIENT FUNDS for SELL Orders"
+      );
       t.end();
     });
 });
@@ -79,11 +81,7 @@ mocks.expectedMarkets[0].markets.forEach(item => {
       .expect("Content-Type", /json/)
       .expect(200)
       .end((err, res) => {
-        t.same(
-          res.body.success,
-          true,
-          "Get Balance for all coins"
-        );
+        t.same(res.body.success, true, "Get Balance for all coins");
         t.end();
       });
   });

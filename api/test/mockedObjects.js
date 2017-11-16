@@ -3,13 +3,7 @@ const mockedUUID = "e606d53c-8d70-11e3-94b5-425861b86ab6";
 const expectedMarkets = [
   {
     markets: [
-      "BTC-ETH",
-      "BTC-NEO",
-      "BTC-LTC",
-      "BTC-BCC",
-      "BTC-VTC",
-      "BTC-OMG",
-      "BTC-DASH"
+      "BTC-ETH"
     ]
   }
 ];

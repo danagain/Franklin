@@ -11,14 +11,40 @@ if (process.env.APP_ENV) {
   mongoUrl = "mongodb://localhost:27017/franklin";
 }
 
+const BIT_API_KEY = process.env.BIT_API_KEY;
+
 bittrex.options({
-  apikey: process.env.BIT_API_KEY,
+  apikey: BIT_API_KEY,
   apisecret: process.env.BIT_API_SECRET
 });
 
 const routes = () => {
   const router = express.Router();
 
+  router.route("/balance/:currency").get((req, res, next) => {
+    bittrex.sendCustomRequest(
+      `https://bittrex.com/api/v1.1/account/getbalance?apikey=${BIT_API_KEY}&currency=${req
+        .params.currency}`,
+      (data, err) => {
+        if (err) {
+          loggingController.log({
+            message: {
+              info: err.message,
+              headers: req.headers,
+              uuid: req.params.uuid,
+              market: req.params.currency,
+              route: req.route.path
+            },
+            severity: "error"
+          });
+          res.status(500).json(err.message);
+        } else {
+          res.json(data);
+        }
+      },
+      true
+    );
+  });
 
   router.route("/balance/:currency").get((req, res) => {
     bittrex.getbalance({ currency: req.params.currency }, (data, err) => {
@@ -44,9 +70,7 @@ const routes = () => {
     // This is where we change the markets we are working with - This is the ONLY place also :)
     const markets = [
       {
-        markets: [
-          "BTC-ETH"
-        ]
+        markets: ["BTC-ETH"]
       }
     ];
     res.json(markets);
@@ -180,8 +204,8 @@ const routes = () => {
   });
   router.route("/cancel/:uuid").get((req, res, next) => {
     bittrex.sendCustomRequest(
-      `https://bittrex.com/api/v1.1/market/cancel?apikey=${process.env
-        .BIT_API_KEY}&uuid=${req.params.uuid}`,
+      `https://bittrex.com/api/v1.1/market/cancel?apikey=${BIT_API_KEY}&uuid=${req
+        .params.uuid}`,
       (data, err) => {
         if (err) {
           loggingController.log({
@@ -196,7 +220,7 @@ const routes = () => {
           });
           res.status(500).json(err.message);
         } else {
-        res.json(data);
+          res.json(data);
         }
       },
       true
@@ -204,15 +228,15 @@ const routes = () => {
   });
   router.route("/orders/:currency").get((req, res, next) => {
     bittrex.sendCustomRequest(
-      `https://bittrex.com/api/v1.1/market/getopenorders?apikey=${process.env
-        .BIT_API_KEY}&market=${req.params.currency}`,
+      `https://bittrex.com/api/v1.1/market/getopenorders?apikey=${BIT_API_KEY}&market=${req
+        .params.currency}`,
       (data, err) => {
         if (err) {
           loggingController.log({
             message: {
               info: err.message,
               headers: req.headers,
-              currency: req.params.currency,
+              market: req.params.currency,
               method: req.method,
               route: req.route.path
             },
@@ -220,13 +244,15 @@ const routes = () => {
           });
           res.status(500).json(err.message);
         } else {
-        res.json(data);
+          res.json(data);
         }
       },
       true
     );
   });
-  router.route("/bittrex/:currency").post((req, res, next) => {
+  router
+    .route("/bittrex/:currency")
+    .post((req, res, next) => {
       mongoClient.connect(mongoUrl, (err, db) => {
         const collection = db.collection(req.params.currency);
         mongoController
