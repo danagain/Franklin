@@ -187,8 +187,7 @@ def thread_work(market, lock):
             bittrex.place_sell_order(price)
 
         hunter_dict = {'market': market, 'Bid':bid_price[-1], 'Ask':ask_price[-1], 'Last':last_price[-1], 'Upper':stdupper,\
-         'Lower':stdlower, 'Time':time_stamp, 'Transactions':trans_count,\
-         'Balance':profitloss, 'Profit':PROFIT, 'Loss':LOSS, 'Net':PROFIT_MINUS_LOSS}
+         'Lower':stdlower}
         token = os.environ['SPLUNKTOKEN']
         print(hunter_dict)
         send_event("splunk", token, hunter_dict)
@@ -198,10 +197,10 @@ def thread_work(market, lock):
 if __name__ == "__main__":
     print("Waiting for correct amount of data")
     #time_for_data = COLLECTION_MINUTES * 60
-    time.sleep(10)
+    time.sleep(900)
     #time.sleep(time_for_data)
     apicall = ApiCall() #instance of the ApiCall class
-    markets = aipcall.get_markets() # Get all of the markets from the WEB-API
+    markets = apicall.get_markets() # Get all of the markets from the WEB-API
     # Add 15 min wait here for profit testing phase
     THREADS = []
 

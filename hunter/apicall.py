@@ -2,9 +2,7 @@ import requests
 import json
 import sys
 
-
 class ApiCall:
-
     def http_request(self, ptype, python_dict, method):
         """
         This function is used to post data from the hunter to the
@@ -31,8 +29,7 @@ class ApiCall:
             print(error)
             sys.exit(1)
 
-
-     def get_markets():
+    def get_markets(self):
          """
          This is the first function that is called as the hunter runs,
          this function makes a call to the WEB-API to determine which stocks

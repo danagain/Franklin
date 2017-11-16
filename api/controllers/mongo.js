@@ -59,6 +59,5 @@ module.exports = {
   insertDocuments,
   findDocuments,
   findOrderStatus,
-  updateOrderStatus,
-  getLastOrder
+  updateOrderStatus
 };
