@@ -46,26 +46,6 @@ const routes = () => {
     );
   });
 
-  router.route("/balance/:currency").get((req, res) => {
-    bittrex.getbalance({ currency: req.params.currency }, (data, err) => {
-      if (err) {
-        loggingController.log({
-          message: {
-            info: err.message,
-            headers: req.headers,
-            body: req.body,
-            method: req.method,
-            route: req.route.path,
-            market: req.params.currency
-          },
-          severity: "error"
-        });
-        res.status(500).json(err.message);
-      } else {
-        res.json(data);
-      }
-    });
-  });
   router.route("/markets").get((req, res, next) => {
     // This is where we change the markets we are working with - This is the ONLY place also :)
     const markets = [
