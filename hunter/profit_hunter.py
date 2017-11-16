@@ -33,7 +33,7 @@ class MyThread(threading.Thread):
     def __init__(self, market):
         """
         Class constructor for initialisation
-        @param coin: The coin/stock this thread is
+        @param market: The market/stock this thread is
         responsible for monitoring
         """
         threading.Thread.__init__(self)
@@ -113,18 +113,18 @@ def send_event(splunk_host, auth_token, log_data):
    return post_success
 
 
-def get_data(coin):
+def get_data(market):
     last_price = []
     datetime_data = []
     bid_price = []
     ask_price = []
     try:
         query = '?n={0}'.format(DATACOUNT)
-        endpoint_url = 'http://web-api:3000/api/bittrex/{0}/{1}'.format(coin, query)
+        endpoint_url = 'http://web-api:3000/api/bittrex/{0}/{1}'.format(market, query)
         resp = requests.get(url=endpoint_url)
         data = json.loads(resp.text)
         if data is None:
-            print("No coin data, hunter out!")
+            print("No market data, hunter out!")
             sys.exit(1)
         else:
             for doc in data:  # Iterate stored documents
@@ -152,7 +152,7 @@ def thread_work(market, lock):
     Thread_work handles all of the work each thread must continually
     perform whilst in a never ending loop
 
-    @param coin: The stock/market to be monitored
+    @param market: The stock/market to be monitored
 
     """
     bittrex = Bittrex(market)#create an instance of the Bittrex class
@@ -161,7 +161,7 @@ def thread_work(market, lock):
     while True:
         #Request the latest data each loop
         last_price, stdupper,\
-        stdlower, time_stamp, bid_price, ask_price = get_data(coin)
+        stdlower, time_stamp, bid_price, ask_price = get_data(market)
         # If the current price has fallen below our threshold, it's time to buy
         if last_price[-1] < (0.999*stdlower) and current_state == "NoBuy" and \
                         stdupper >= (last_price[-1] * 1.0025):
@@ -186,7 +186,7 @@ def thread_work(market, lock):
             price = last_price[-1] #update the price variable
             bittrex.place_sell_order(price)
 
-        hunter_dict = {'Coin': coin, 'Bid':bid_price[-1], 'Ask':ask_price[-1], 'Last':last_price[-1], 'Upper':stdupper,\
+        hunter_dict = {'market': market, 'Bid':bid_price[-1], 'Ask':ask_price[-1], 'Last':last_price[-1], 'Upper':stdupper,\
          'Lower':stdlower, 'Time':time_stamp, 'Transactions':trans_count,\
          'Balance':profitloss, 'Profit':PROFIT, 'Loss':LOSS, 'Net':PROFIT_MINUS_LOSS}
         token = os.environ['SPLUNKTOKEN']

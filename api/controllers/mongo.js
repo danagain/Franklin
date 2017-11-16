@@ -24,27 +24,7 @@ const findDocuments = (collection, docCount) => {
   });
 };
 
-/*
-I am making this function to find the last buy entry into the mongo database.
-I can then use this to send the buy order uuid back to hunter from the web-api
-when we need to cancel the order
-*/
-const getLastOrder = (collection) => {
-  return new Promise((resolve, reject) => {
-    collection
-      .find({})
-      .limit(1)
-      .sort({ $natural: -1 })
-      .toArray((err, docs) => { //All this array stuff is not necessary but im
-        //not confident enough with javascript to try and write this myself
-        //ill leave this job for you Flynn :P
-        if (err) {
-          reject(err);
-        }
-        resolve(docs.reverse());
-      });
-  });
-};
+
 
 
 const updateOrderStatus = (collection, uuid) => {

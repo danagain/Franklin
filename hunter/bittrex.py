@@ -75,7 +75,7 @@ class Bittrex:
         @param coin: The stock/market
         """
         #First let's get the current uuid of the active order by calling the web-api
-        get_uuid = self.apicall.http_request('order', self.coin, 'Get')
+        get_uuid = self.apicall.http_request('orders', self.coin, 'Get')
         result_return = uuid_return['result'] #get the uuid from the returned request
         uuid = {'Coin':result_return['uuid']} #store into a dictionary
         self.apicall.http_request('cancel', uuid, 'Get') #call api again
