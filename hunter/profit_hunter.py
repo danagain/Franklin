@@ -163,7 +163,7 @@ def thread_work(market, lock):
         last_price, stdupper,\
         stdlower, time_stamp, bid_price, ask_price = get_data(market)
         # If the current price has fallen below our threshold, it's time to buy
-        if last_price[-1] < (0.999*stdlower) and current_state == "NoBuy" and \
+        if last_price[-1] < (0.995*stdupper) and current_state == "NoBuy" and \
                         stdupper >= (last_price[-1] * 1.0025):
                         qty = BTC_PER_PURCHASE / last_price[-1]
                         price = last_price[-1]
@@ -171,7 +171,7 @@ def thread_work(market, lock):
         #if state variable is ActiveBuy then an order has been sucessfully filled and we now need to
         #place an immediate sell order at our desired profit margin
         if  current_state == "ActiveBuy":
-            sell_goal = price * 1.006 #sell for a 0.1% profit
+            sell_goal = price * 1.005499 #sell for a 0.1% profit
             current_state = bittrex.place_sell_order(sell_goal)
         #if we are in a current state where we have placed a sell then lets keep an eye on our balance
         #so we know when our sell order has been filled, then update our state
@@ -197,7 +197,7 @@ def thread_work(market, lock):
 if __name__ == "__main__":
     print("Waiting for correct amount of data")
     #time_for_data = COLLECTION_MINUTES * 60
-    time.sleep(10)
+    time.sleep(30)
     #time.sleep(time_for_data)
     apicall = ApiCall() #instance of the ApiCall class
     markets = apicall.get_markets() # Get all of the markets from the WEB-API

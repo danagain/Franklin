@@ -23,7 +23,7 @@ class Bittrex:
         @param coin: The stock/market
         """
         balance_return = self.apicall.http_request('Balance', self.coin, 'Get')
-        result_return = balance_return[0]['result']
+        result_return = balance_return['result']
         current_balance = result_return['Balance']
         return current_balance
 
@@ -51,7 +51,7 @@ class Bittrex:
             if current_balance > 0:
                 return "ActiveBuy"
         #At this point our loop is finished and it's been 1 min without our order filling
-        cancel_order(self.coin) #cancel the order
+        self.cancel_order() #cancel the order
         return "NoBuy"
 
     def place_sell_order(self, price):
@@ -59,7 +59,9 @@ class Bittrex:
         Place a sell order
         """
         #make sure we have the right qty
-        qty = self.get_balance(self.coin)
+        qty = self.get_balance()
+        if (qty * price) < 0.00060000:
+            return "NoBuy"
         #Dictionary of sell order params for WEB-API to send to bittrex
         sell_dict = {'Coin': self.market, 'OrderType':'LIMIT',\
             'Quantity': qty, 'Rate':price,\
@@ -67,6 +69,7 @@ class Bittrex:
             'ConditionType': 'NONE', 'Target': 0}
         #Sending the purchase request to our web-api
         self.apicall.http_request("sell", sell_dict, 'Post')
+        time.sleep(4)
         return "SellPlaced"
 
 
@@ -79,6 +82,6 @@ class Bittrex:
         #First let's get the current uuid of the active order by calling the web-api
         market_dict = {'Coin': self.market}
         get_uuid = self.apicall.http_request('orders', market_dict, 'Get')
-        result_return = uuid_return['result'] #get the uuid from the returned request
+        result_return = get_uuid['result'] #get the uuid from the returned request
         uuid = {'Coin':result_return[0]['OrderUuid']} #store into a dictionary
         self.apicall.http_request('cancel', uuid, 'Get') #call api again

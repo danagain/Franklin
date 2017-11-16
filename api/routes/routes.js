@@ -45,13 +45,7 @@ const routes = () => {
     const markets = [
       {
         markets: [
-          "BTC-ETH",
-          "BTC-NEO",
-          "BTC-LTC",
-          "BTC-BCC",
-          "BTC-VTC",
-          "BTC-OMG",
-          "BTC-DASH"
+          "BTC-ETH"
         ]
       }
     ];
