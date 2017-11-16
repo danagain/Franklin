@@ -11,7 +11,6 @@ if (process.env.APP_ENV) {
   mongoUrl = "mongodb://localhost:27017/franklin";
 }
 
-
 bittrex.options({
   apikey: process.env.BIT_API_KEY,
   apisecret: process.env.BIT_API_SECRET
@@ -19,6 +18,41 @@ bittrex.options({
 
 const routes = () => {
   const router = express.Router();
+
+  /*
+  Route that I added to send the last order information for a given coin back
+  to the hunter. The last order will be the current order as the hunter
+  only keeps one open order per coin
+  */
+  router.route("/order/:currency").get((req, res) => {
+    mongoClient.connect(mongoUrl, (err, db) => {
+      const collection = db.collection(
+        `transactions-${req.params.currency}`
+      );
+      mongoController
+        .getLastOrder(collection) //function that needs cleaning up in the mongo controllers.js
+        .then(data => {
+          db.close();
+          res.json(data);
+        })
+        .catch(err => {
+          loggingController.log({
+            message: {
+              info: err.message,
+              headers: req.headers,
+              body: req.body,
+              method: req.method,
+              route: req.route.path
+            },
+            severity: "error"
+          });
+          db.close();
+          res.status(500).json([{ error: err.message }]);
+        });
+    });
+
+
+  });
 
   router.route("/balance/:currency").get((req, res) => {
     bittrex.getbalance({ currency: req.params.currency }, (data, err) => {

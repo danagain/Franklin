@@ -12,6 +12,8 @@ import requests
 import numpy as np
 import urllib.request
 import ssl
+from bittrex import Bittrex
+from apicall import ApiCall
 
 # Loop/Based Settings
 LOOP_SECONDS = int(os.environ['LOOP_SECONDS'])
@@ -23,9 +25,6 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 # Init Settings in relation to profits/loss
 BTC_PER_PURCHASE = 0.00060000
-PROFIT = 0.00000000
-LOSS = 0.00000000
-PROFIT_MINUS_LOSS = 0.00000000
 
 class MyThread(threading.Thread):
     """
@@ -46,7 +45,6 @@ class MyThread(threading.Thread):
         Custom Override of the Thread Librarys run function to start the
         thread work function
         """
-
         thread_work(self.coin, self.lock)
 
 
@@ -115,53 +113,6 @@ def send_event(splunk_host, auth_token, log_data):
    return post_success
 
 
-def http_request(ptype, python_dict, method):
-    """
-    This function is used to post data from the hunter to the
-    web-api
-    @param ptype: Specifies the post type, e.g graph, buy, sell
-    @param python_dict: Python dictionary containing data
-    sent to web-api
-    """
-    try:
-        endpoint_url = 'http://web-api:3000/api/{0}/{1}'.format(ptype, python_dict['Coin'])
-        jsondata = json.dumps(python_dict)
-        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-        if method == 'Post':
-            requests.post(endpoint_url, data=jsondata, headers=headers)
-        if method == 'Get':
-            r = requests.get(endpoint_url)
-            try:
-                x = r.json()
-                return x
-            except ValueError:  # includes simplejson.decoder.JSONDecodeError
-                x = r.text #return the value in text if there was a JSON decode error
-                return x
-    except requests.exceptions.RequestException as error:
-        print(error)
-        sys.exit(1)
-
-def get_markets():
-    """
-    This is the first function that is called as the hunter runs,
-    this function makes a call to the WEB-API to determine which stocks
-    are going to be hunted
-    @return data: Returns a list of markets returned from the WEB-API
-    """
-    try:
-        endpoint_url = 'http://web-api:3000/api/markets'
-        resp = requests.get(url=endpoint_url)
-        data = json.loads(resp.text)
-        data = data[0]["markets"]
-        if data is None:
-            print("No Markets selected in API, Hunter quiting")
-            sys.exit(1)
-        else:
-            return data
-    except requests.exceptions.RequestException as error:
-        print(error)
-        sys.exit(1)
-
 def get_data(coin):
     last_price = []
     datetime_data = []
@@ -193,74 +144,48 @@ def get_data(coin):
         print(error)
         sys.exit(1)
 
-def thread_work(coin, lock):
+
+
+def thread_work(market, lock):
     """
+
     Thread_work handles all of the work each thread must continually
     perform whilst in a never ending loop
+
     @param coin: The stock/market to be monitored
+
     """
-    global LOSS
-    global PROFIT
-    global PROFIT_MINUS_LOSS
-    purchase = 0
-    profitloss = 0
-    trans_count = 0
-    purchase_qty = 0
-    purchase_total = 0
-    sell = 0
-    split_market = coin.split('-')
-    split_market = split_market[-1]
-    split_market_dict = {'Coin':split_market}
-    current_balance = 0
+    bittrex = Bittrex(market)#create an instance of the Bittrex class
+    current_state = "NoBuy"#init the current balance variable to NoBuy
+    price = 0#variable to keep track of what price we are buying shares at
+    relist_price = 0#variable to keep track of our re list price for stop losses
     while True:
+        #Request the latest data each loop
         last_price, stdupper,\
         stdlower, time_stamp, bid_price, ask_price = get_data(coin)
         # If the current price has fallen below our threshold, it's time to buy
-        if bid_price[-1] < (0.999*stdlower) and (current_balance is None or current_balance == 0) and \
-                        stdupper >= (ask_price[-1] * 1.0025):
-            purchase = bid_price[-1]
-            purchase_qty = ((BTC_PER_PURCHASE + profitloss) / bid_price[-1])
-            purchase_qty = round(purchase_qty,8)
-            purchase_total = purchase_qty * bid_price[-1]
-            purchase_dict = {'Coin': coin, 'OrderType':'LIMIT',\
-                    'Quantity': purchase_qty, 'Rate':bid_price[-1],\
-                    'TimeInEffect':'IMMEDIATE_OR_CANCEL', \
-                    'ConditionType': 'NONE', 'Target': 0}
-
-            http_request("buy", purchase_dict, 'Post')
-            time.sleep(0.1)
-            balance_return = http_request('Balance', split_market_dict, 'Get')
-            result_return = balance_return['result']
-            current_balance = result_return['Balance']
-
-        elif ask_price[-1] >= (1.004 * purchase) and current_balance > 0:
-             sell = purchase_qty * ask_price[-1]
-             sell_dict = {'Coin': coin, 'OrderType':'LIMIT',\
-                    'Quantity': purchase_qty, 'Rate':ask_price[-1],\
-                    'TimeInEffect':'IMMEDIATE_OR_CANCEL', \
-                    'ConditionType': 'NONE', 'Target': 0}
-             http_request("sell", sell_dict, 'Post')
-
-             profitloss += (sell - (1.0025 * purchase_total))
-             lock.acquire()
-             PROFIT += (sell - (1.0025 * purchase_total))
-             PROFIT_MINUS_LOSS += (sell - (1.0025 * purchase_total))
-             lock.release()
-             trans_count += 1
-             purchase = 0
-             purchase_total = 0
-
-
-        elif bid_price[-1] <= (purchase * 0.996) and current_balance > 0:
-             sell = purchase_qty * bid_price[-1]
-             lock.acquire()
-             profitloss += (sell - (1.0025 * purchase_total))
-             LOSS += (sell - (1.0025 * purchase_total))
-             PROFIT_MINUS_LOSS += (sell - (1.0025 * purchase_total))
-             lock.release()
-             trans_count += 1
-             purchase = 0
-             purchase_total = 0
+        if last_price[-1] < (0.999*stdlower) and current_state == "NoBuy" and \
+                        stdupper >= (last_price[-1] * 1.0025):
+                        qty = BTC_PER_PURCHASE / last_price[-1]
+                        price = last_price[-1]
+                        current_state = bittrex.place_buy_order(qty, price)
+        #if balance variable is one then an order has been sucessfully filled and we now need to
+        #place an immediate sell order at our desired profit margin
+        if  current_state == "ActiveBuy":
+            sell_goal = price * 1.006 #sell for a 0.1% profit
+            current_state = bittrex.place_sell_order(sell_goal)
+        #if we are in a current state where we have placed a sell then lets keep an eye on our balance
+        #so we know when our sell order has been filled, then update our state
+        if current_state == "SellPlaced":
+            check_balance = bittrex.get_balance()
+            if check_balance == 0 or check_balance == None:
+                current_state = "NoBuy"
+        #if the price is tanking after making a purchase then we need to cut our losses and cancel
+        #our current sell and re list it at a lower price
+        if last_price[-1] <= (price * 0.996) and current_state == "SellPlaced":
+            bittrex.cancel_order()
+            price = last_price[-1] #update the price variable
+            bittrex.place_sell_order(price)
 
         hunter_dict = {'Coin': coin, 'Bid':bid_price[-1], 'Ask':ask_price[-1], 'Last':last_price[-1], 'Upper':stdupper,\
          'Lower':stdlower, 'Time':time_stamp, 'Transactions':trans_count,\
@@ -276,7 +201,8 @@ if __name__ == "__main__":
     #time_for_data = COLLECTION_MINUTES * 60
     time.sleep(10)
     #time.sleep(time_for_data)
-    markets = get_markets() # Get all of the markets from the WEB-API
+    apicall = ApiCall() #instance of the ApiCall class
+    markets = aipcall.get_markets() # Get all of the markets from the WEB-API
     # Add 15 min wait here for profit testing phase
     THREADS = []
 

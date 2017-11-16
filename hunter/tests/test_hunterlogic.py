@@ -1,10 +1,16 @@
 import unittest
 from getdata import GetData
+from bittrex import Bittrex
+
+
+
+
 
 class GetDataTest(unittest.TestCase):
 
     def setUp(self):
         self.getdata = GetData()
+        self.bittrex = Bittrex("BTC-ETH")
 
     def test_returned_values(self):
         data = self.getdata.return_data()
@@ -19,3 +25,7 @@ class GetDataTest(unittest.TestCase):
         market = 'BTC-ETH'
         coin = market.split('-')
         self.assertEqual(coin[-1], 'ETH')
+
+    def test_get_uuid(self):
+        coin = {"Coin":'BTC-ETH'}
+        self.bittrex.cancel_order(coin)
