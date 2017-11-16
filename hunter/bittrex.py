@@ -38,7 +38,6 @@ class Bittrex:
             #been filled and we can exit our loop
             if current_balance > 0:
                 return "ActiveBuy"
-                break
         #At this point our loop is finished and it's been 1 min without our order filling
         cancel_order(self.coin) #cancel the order
         return "NoBuy"
@@ -78,5 +77,5 @@ class Bittrex:
         market_dict = {'Coin': self.market}
         get_uuid = self.apicall.http_request('orders', market_dict, 'Get')
         result_return = uuid_return['result'] #get the uuid from the returned request
-        uuid = {'Coin':result_return['uuid']} #store into a dictionary
+        uuid = {'Coin':result_return[0]['OrderUuid']} #store into a dictionary
         self.apicall.http_request('cancel', uuid, 'Get') #call api again
