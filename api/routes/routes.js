@@ -70,7 +70,26 @@ const routes = () => {
     // This is where we change the markets we are working with - This is the ONLY place also :)
     const markets = [
       {
-        markets: ["BTC-ETH"]
+        markets: [
+          "BTC-LSK",
+          "BTC-ETH",
+          "BTC-STORJ",
+          "BTC-NEO",
+          "BTC-QTUM",
+          "BTC-ZEC",
+          "BTC-OMG",
+          "BTC-EMC2",
+          "BTC-LTC",
+          "BTC-XRP",
+          "BTC-VTC",
+          "BTC-ADA",
+          "BTC-BAY",
+          "BTC-POWR",
+          "BTC-DASH",
+          "BTC-XLM",
+          "BTC-OK",
+          "BTC-STRAT"
+        ]
       }
     ];
     res.json(markets);
