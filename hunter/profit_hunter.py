@@ -30,14 +30,14 @@ class MyThread(threading.Thread):
     """
     Class to handle all of the threading aspect
     """
-    def __init__(self, coin):
+    def __init__(self, market):
         """
         Class constructor for initialisation
         @param coin: The coin/stock this thread is
         responsible for monitoring
         """
         threading.Thread.__init__(self)
-        self.coin = coin
+        self.market = market
         self.lock = threading.Lock()
 
     def run(self):
@@ -45,7 +45,7 @@ class MyThread(threading.Thread):
         Custom Override of the Thread Librarys run function to start the
         thread work function
         """
-        thread_work(self.coin, self.lock)
+        thread_work(self.market, self.lock)
 
 
 def send_event(splunk_host, auth_token, log_data):
