@@ -23,7 +23,7 @@ class Bittrex:
         @param coin: The stock/market
         """
         balance_return = self.apicall.http_request('Balance', self.coin, 'Get')
-        result_return = balance_return['result']
+        result_return = balance_return[0]['result']
         current_balance = result_return['Balance']
         return current_balance
 
