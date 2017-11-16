@@ -4,6 +4,7 @@ functionality necessary. This involves buying, selling, canceling of orders
 and checking current balances.
 """
 from apicall import ApiCall
+import time
 
 class Bittrex:
     """
@@ -15,6 +16,17 @@ class Bittrex:
         split_market_string = market.split('-')
         self.coin = {"Coin": split_market_string[-1]}#dict for our http_request function
         self.apicall = ApiCall()#create instance of the ApiCall class
+
+    def get_balance(self):
+        """
+        Get the current balance for a given market
+        @param coin: The stock/market
+        """
+        balance_return = self.apicall.http_request('Balance', self.coin, 'Get')
+        result_return = balance_return['result']
+        current_balance = result_return['Balance']
+        return current_balance
+
 
     def place_buy_order(self, qty, price):
         """
@@ -28,12 +40,12 @@ class Bittrex:
             'TimeInEffect':'GOOD_TIL_CANCELLED', \
             'ConditionType': 'NONE', 'Target': 0}
         #Sending the purchase request to our web-api
-        apicall.http_request("buy", purchase_dict, 'Post')
+        self.apicall.http_request("buy", purchase_dict, 'Post')
         #Lets wait 1 minuite, checking 3 times on the state of our purchase order
         for i in range(3):
             time.sleep(20)
             #Getting the current balance of our coin
-            current_balance = get_balance(self.coin)
+            current_balance = self.get_balance()
             #If the balance of our coin is greater than zero, then our order has
             #been filled and we can exit our loop
             if current_balance > 0:
@@ -47,25 +59,16 @@ class Bittrex:
         Place a sell order
         """
         #make sure we have the right qty
-        qty = get_balance(self.coin)
+        qty = self.get_balance(self.coin)
         #Dictionary of sell order params for WEB-API to send to bittrex
         sell_dict = {'Coin': self.market, 'OrderType':'LIMIT',\
             'Quantity': qty, 'Rate':price,\
             'TimeInEffect':'GOOD_TIL_CANCELLED', \
             'ConditionType': 'NONE', 'Target': 0}
         #Sending the purchase request to our web-api
-        apicall.http_request("sell", sell_dict, 'Post')
+        self.apicall.http_request("sell", sell_dict, 'Post')
         return "SellPlaced"
 
-    def get_balance(self):
-        """
-        Get the current balance for a given market
-        @param coin: The stock/market
-        """
-        balance_return = self.apicall.http_request('Balance', self.coin, 'Get')
-        result_return = balance_return['result']
-        current_balance = result_return['Balance']
-        return current_balance
 
 
     def cancel_order(self):

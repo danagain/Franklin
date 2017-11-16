@@ -197,7 +197,7 @@ def thread_work(market, lock):
 if __name__ == "__main__":
     print("Waiting for correct amount of data")
     #time_for_data = COLLECTION_MINUTES * 60
-    time.sleep(900)
+    time.sleep(10)
     #time.sleep(time_for_data)
     apicall = ApiCall() #instance of the ApiCall class
     markets = apicall.get_markets() # Get all of the markets from the WEB-API
