@@ -9,22 +9,17 @@ import time
 import json
 import sys
 import requests
-import numpy as np
 import urllib.request
 import ssl
 from bittrex import Bittrex
 from apicall import ApiCall
 
-# Loop/Based Settings
-LOOP_SECONDS = int(os.environ['LOOP_SECONDS'])
-COLLECTION_MINUTES = int(os.environ['COLLECTION_MINUTES'])
-DATACOUNT = COLLECTION_MINUTES * (60/LOOP_SECONDS)
+BTC_PER_PURCHASE = 0.00200000
 
 # For talking with Splunk Container
 ssl._create_default_https_context = ssl._create_unverified_context
 
-# Init Settings in relation to profits/loss
-BTC_PER_PURCHASE = 0.00060000
+
 
 class MyThread(threading.Thread):
     """
@@ -38,14 +33,13 @@ class MyThread(threading.Thread):
         """
         threading.Thread.__init__(self)
         self.market = market
-        self.lock = threading.Lock()
 
     def run(self):
         """
         Custom Override of the Thread Librarys run function to start the
         thread work function
         """
-        thread_work(self.market, self.lock)
+        thread_work(self.market)
 
 
 def send_event(splunk_host, auth_token, log_data):
@@ -113,91 +107,53 @@ def send_event(splunk_host, auth_token, log_data):
    return post_success
 
 
-def get_data(market):
-    last_price = []
-    datetime_data = []
-    bid_price = []
-    ask_price = []
-    try:
-        query = '?n={0}'.format(DATACOUNT)
-        endpoint_url = 'http://web-api:3000/api/bittrex/{0}/{1}'.format(market, query)
-        resp = requests.get(url=endpoint_url)
-        data = json.loads(resp.text)
-        if data is None:
-            print("No market data, hunter out!")
-            sys.exit(1)
-        else:
-            for doc in data:  # Iterate stored documents
-                last_price.append(doc['Last'])
-                datetime_data.append(doc['TimeStamp'])
-                bid_price.append(doc['Bid'])
-                ask_price.append(doc['Ask'])
-            avgrecentprice = np.mean(last_price[(len(last_price) - int(DATACOUNT)):-1])
-            recentstd = np.std(last_price[(len(last_price) - int(DATACOUNT)):-1])
-            recentstdupper = avgrecentprice + 2*(recentstd/2)
-            recentstdlower = avgrecentprice - 2*(recentstd/2)
-            datedata = datetime_data[-1]
 
-            return last_price, recentstdupper, recentstdlower,\
-            datedata, bid_price, ask_price
-    except requests.exceptions.RequestException as error:
-        print(error)
-        sys.exit(1)
-
-
-
-def thread_work(market, lock):
+def thread_work(market):
     """
-
-    Thread_work handles all of the work each thread must continually
-    perform whilst in a never ending loop
-
-    @param market: The stock/market to be monitored
-
+    Thread work now needs to check the two current moving exponential values
+    to determine if an overlap greater than our set threshold has occured.
+    In the instance that the overlap occurs the appropriate action will be taken
     """
-    bittrex = Bittrex(market)#create an instance of the Bittrex class
-    current_state = "NoBuy"#init the current state variable to NoBuy
-    price = 0#variable to keep track of what price we are buying shares at
+    #make an instance of the bittrex class which takes market as a constructor arg
+    bittrex = Bittrex(market)
+    mea = bittrex.calculate_mea(10, 'hour')
+    mea2 = bittrex.calculate_mea(20, 'hour')
+    balance = bittrex.get_balance()
+    current_state = ""
+    if mea > mea2:
+        current_state = "InitTrendingUp"
+    else:
+        current_state = "InitTrendingDown"
+
     while True:
-        #Request the latest data each loop
-        last_price, stdupper,\
-        stdlower, time_stamp, bid_price, ask_price = get_data(market)
-        # If the current price has fallen below our threshold, it's time to buy
-        if last_price[-1] < (0.995*stdupper) and current_state == "NoBuy" and \
-                        stdupper >= (last_price[-1] * 1.0025):
-                        qty = BTC_PER_PURCHASE / last_price[-1]
-                        price = last_price[-1]
-                        current_state = bittrex.place_buy_order(qty, price)
-        #if state variable is ActiveBuy then an order has been sucessfully filled and we now need to
-        #place an immediate sell order at our desired profit margin
-        if  current_state == "ActiveBuy":
-            sell_goal = price * 1.005499 #sell for a 0.1% profit
-            current_state = bittrex.place_sell_order(sell_goal)
-        #if we are in a current state where we have placed a sell then lets keep an eye on our balance
-        #so we know when our sell order has been filled, then update our state
-        if current_state == "SellPlaced":
-            check_balance = bittrex.get_balance()
-            if check_balance == 0 or check_balance == None:
-                current_state = "NoBuy"
-        #if the price is tanking after making a purchase then we need to cut our losses and cancel
-        #our current sell and re list it at a lower price
-        if last_price[-1] <= (price * 0.996) and current_state == "SellPlaced":
-            bittrex.cancel_order()
-            price = last_price[-1] #update the price variable
-            bittrex.place_sell_order(price)
+        #test the historical data is getting called properly, interval, hour
+        mea = bittrex.calculate_mea(10, 'hour')
+        mea2 = bittrex.calculate_mea(20, 'hour')
+        balance = bittrex.get_balance()
+        #if the smaller period mea has risen 1.5% above the larger period mea then buy
+        if balance is not None:
+            if mea >= (1.0015 * mea2) and current_state != "InitTrendingUp" and balance == 0:
+                latest_summary = bittrex.get_latest_summary()
+                ask = latest_summary['Ask']
+                qty = BTC_PER_PURCHASE / ask
+                bittrex.place_buy_order(qty, ask)
+                current_state = "TrendingUp"
+            #if the smaller period mea has fallen 1.5% below the larger period mea then sell
+            if mea <= (0.9985 * mea2) and current_state == "TrendingUp" and balance > 0:
+                latest_summary = bittrex.get_latest_summary()
+                bid = latest_summary['Bid']
+                qty = balance
+                bittrex.place_sell_order(bid)
+                current_state = "TrendingDown"
 
-        hunter_dict = {'market': market, 'Bid':bid_price[-1], 'Ask':ask_price[-1], 'Last':last_price[-1], 'Upper':stdupper,\
-         'Lower':stdlower}
-        token = os.environ['SPLUNKTOKEN']
-        print(hunter_dict)
-        send_event("splunk", token, hunter_dict)
-        time.sleep(3)
+        print("ema 10  ", market, " ", mea )
+        print("ema 20  ", market, " ", mea2 )
+        time.sleep(300)
 
 
 if __name__ == "__main__":
     print("Waiting for correct amount of data")
-    #time_for_data = COLLECTION_MINUTES * 60
-    time.sleep(30)
+    time.sleep(3)
     #time.sleep(time_for_data)
     apicall = ApiCall() #instance of the ApiCall class
     markets = apicall.get_markets() # Get all of the markets from the WEB-API
@@ -210,6 +166,6 @@ if __name__ == "__main__":
         THREADS.append(t)
     for i in range(0, len(markets)):
         THREADS[i].start()
-        time.sleep(2)
+        time.sleep(10)
     while threading.active_count() > 0:
-        time.sleep(30)
+        time.sleep(1000)

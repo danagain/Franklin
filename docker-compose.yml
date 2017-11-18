@@ -1,14 +1,5 @@
 version: '3'
 services:
-  streamer:
-    build: ./streamer
-    restart: always
-    env_file:
-      - .env
-    links:
-      - mongo
-      - splunk
-      - web-api
   hunter:
     build: ./hunter
     restart: always

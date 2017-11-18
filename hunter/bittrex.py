@@ -5,6 +5,8 @@ and checking current balances.
 """
 from apicall import ApiCall
 import time
+import requests
+import json
 
 class Bittrex:
     """
@@ -23,11 +25,20 @@ class Bittrex:
         @param coin: The stock/market
         """
         balance_return = self.apicall.http_request('Balance', self.coin, 'Get')
-        if  balance_return is not None and balance_return is not str:
+        while type(balance_return) is not dict:
+            balance_return = self.apicall.http_request('Balance', self.coin, 'Get')
             result_return = balance_return['result']
             current_balance = result_return['Balance']
-            return current_balance
+            time.sleep(5)
+        result_return = balance_return['result']
+        current_balance = result_return['Balance']
+        return current_balance
 
+    def get_latest_summary(self):
+        #wrapping the market in a dict for the http func
+        market = {'Coin': self.market}
+        summary = self.apicall.http_request("summary", market, 'Get')
+        return summary['result'][0]
 
     def place_buy_order(self, qty, price):
         """
@@ -73,8 +84,6 @@ class Bittrex:
         time.sleep(4)
         return "SellPlaced"
 
-
-
     def cancel_order(self):
         """
         Cancel a currently active order on bittrex
@@ -86,3 +95,38 @@ class Bittrex:
         result_return = get_uuid['result'] #get the uuid from the returned request
         uuid = {'Coin':result_return[0]['OrderUuid']} #store into a dictionary
         self.apicall.http_request('cancel', uuid, 'Get') #call api again
+
+    def calculate_sma(self, period, interval):
+        """
+        calculates the simple moving average of the market
+        @param period: The period of time for which the mea will be calculated over
+        @param interval: The desired tick interval
+        """
+        closing_avg = sum(self.apicall.get_historical(self.market, period, interval))
+        return (closing_avg / period)
+
+
+    def calculate_mea(self, period, interval):
+        """
+        This function calcualtes our moving exponential averages that are used
+        to determine our buy and sell signals.
+        @param period: The period of time for which the mea will be calculated over
+        @param interval: The desired tick interval
+        """
+        last_closing_price = self.apicall.get_historical(self.market, period, interval)
+        seed = self.calculate_sma(period, interval)
+        #EMA [today] = (Price [today] x K) + (EMA [yesterday] x (1 – K))
+        #K = 2 ÷(N + 1)
+        #N = the length of the EMA
+        #Price [today] = the current closing price
+        #EMA [yesterday] = the previous EMA value
+        #EMA [yesterday] = the previous EMA value
+        K = (2/(period + 1))
+        N = period
+        #Seeding the first EMA to the closing price 10 days ago
+        #EMA_yesterday = last_closing_price[0]
+        EMA_yesterday = last_closing_price[0]
+        for i in range(len(last_closing_price)-1):
+            EMA_today = (last_closing_price[i + 1] * K) + (EMA_yesterday * (1 - K))
+            EMA_yesterday = EMA_today
+        return EMA_today

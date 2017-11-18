@@ -51,24 +51,11 @@ const routes = () => {
     const markets = [
       {
         markets: [
-          "BTC-LSK",
-          "BTC-ETH",
-          "BTC-STORJ",
           "BTC-NEO",
-          "BTC-QTUM",
-          "BTC-ZEC",
+          "BTC-ETH",
+          "BTC-BCC",
           "BTC-OMG",
-          "BTC-EMC2",
-          "BTC-LTC",
-          "BTC-XRP",
-          "BTC-VTC",
-          "BTC-ADA",
-          "BTC-BAY",
-          "BTC-POWR",
-          "BTC-DASH",
-          "BTC-XLM",
-          "BTC-OK",
-          "BTC-STRAT"
+          "BTC-LSK"
         ]
       }
     ];
@@ -235,6 +222,29 @@ const routes = () => {
             message: {
               info: err.message,
               headers: req.headers,
+              method: req.method,
+              route: req.route.path
+            },
+            severity: "error"
+          });
+          res.status(500).json(err.message);
+        } else {
+          res.json(data);
+        }
+      },
+      true
+    );
+  });
+  router.route("/summary/:market").get((req, res, next) => {
+    bittrex.sendCustomRequest(
+      `https://bittrex.com/api/v1.1/public/getmarketsummary?market=${req.params.market}`,
+      (data, err) => {
+        if (err) {
+          loggingController.log({
+            message: {
+              info: err.message,
+              headers: req.headers,
+              market: req.params.market,
               method: req.method,
               route: req.route.path
             },

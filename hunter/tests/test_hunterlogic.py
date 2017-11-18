@@ -31,3 +31,8 @@ class GetDataTest(unittest.TestCase):
         result_return = get_uuid['result'] #get the uuid from the returned request
         uuid = {'Coin':result_return[0]['OrderUuid']} #store into a dictionary
         self.assertEqual(uuid['Coin'], "2ae79492-8cf9-4e0f-9546-22d6bc9f160f")
+        
+    def test_get_summary(self):
+        summary = {"success":True,"message":"","result":[{"MarketName":"BTC-NEO","High":0.0063,"Low":0.00440027,"Volume":4473629.32713295,"Last":0.005872,"BaseVolume":23954.60058103,"TimeStamp":"2017-11-18T20:05:51.62","Bid":0.00585955,"Ask":0.005872,"OpenBuyOrders":10299,"OpenSellOrders":20766,"PrevDay":0.0046,"Created":"2016-10-26T01:28:31.96"}]}
+        result = summary['result'][0]
+        self.assertEqual(result['Bid'], 0.00585955)
