@@ -227,7 +227,7 @@ const routes = () => {
   });
   router.route("/historical/:market").get((req, res, next) => {
     bittrex.sendCustomRequest(
-      `https://bittrex.com/Api/v2.0/market/GetTicks?marketName=${req.params.market}&tickInterval=${req
+      `https://bittrex.com/Api/v2.0/pub/market/GetTicks?marketName=${req.params.market}&tickInterval=${req
         .query.interval}`,
       (data, err) => {
         if (err) {
