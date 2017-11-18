@@ -225,6 +225,29 @@ const routes = () => {
       true
     );
   });
+  router.route("/historical/:market").get((req, res, next) => {
+    bittrex.sendCustomRequest(
+      `https://bittrex.com/Api/v2.0/market/GetTicks?marketName=${req.params.market}&tickInterval=${req
+        .query.interval}`,
+      (data, err) => {
+        if (err) {
+          loggingController.log({
+            message: {
+              info: err.message,
+              headers: req.headers,
+              method: req.method,
+              route: req.route.path
+            },
+            severity: "error"
+          });
+          res.status(500).json(err.message);
+        } else {
+          res.json(data);
+        }
+      },
+      true
+    );
+  });
   router.route("/orders/:currency").get((req, res, next) => {
     bittrex.sendCustomRequest(
       `https://bittrex.com/api/v1.1/market/getopenorders?apikey=${BIT_API_KEY}&market=${req
