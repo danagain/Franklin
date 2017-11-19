@@ -55,7 +55,10 @@ const routes = () => {
           "BTC-ETH",
           "BTC-BCC",
           "BTC-OMG",
-          "BTC-LSK"
+          "BTC-LSK",
+          "BTC-POWR",
+          "BTC-GRS",
+          "BTC-LTC",
         ]
       }
     ];

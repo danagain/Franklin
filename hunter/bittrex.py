@@ -114,7 +114,7 @@ class Bittrex:
         @param interval: The desired tick interval
         """
         last_closing_price = self.apicall.get_historical(self.market, period, interval)
-        seed = self.calculate_sma(period, interval)
+        #seed = self.calculate_sma(period, interval)
         #EMA [today] = (Price [today] x K) + (EMA [yesterday] x (1 – K))
         #K = 2 ÷(N + 1)
         #N = the length of the EMA

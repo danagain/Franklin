@@ -117,6 +117,7 @@ def thread_work(market):
     #make an instance of the bittrex class which takes market as a constructor arg
     bittrex = Bittrex(market)
     mea = bittrex.calculate_mea(10, 'hour')
+    time.sleep(10)
     mea2 = bittrex.calculate_mea(20, 'hour')
     balance = bittrex.get_balance()
     current_state = ""
@@ -132,6 +133,10 @@ def thread_work(market):
         balance = bittrex.get_balance()
         #if the smaller period mea has risen 1.5% above the larger period mea then buy
         if balance is not None:
+            #if the inital state is trending up over time the price dips then we have to
+            #re adjust the ciurrnet state so that the hunter will buy
+            if current_state == "InitTrendingUp" and mea <= (0.9985 * mea2):
+                current_state = "TrendingDown"
             if mea >= (1.0015 * mea2) and current_state != "InitTrendingUp" and balance == 0:
                 latest_summary = bittrex.get_latest_summary()
                 ask = latest_summary['Ask']
