@@ -14,7 +14,7 @@ import ssl
 from bittrex import Bittrex
 from apicall import ApiCall
 
-BTC_PER_PURCHASE = 0.00200000
+BTC_PER_PURCHASE = 0.00100000
 
 # For talking with Splunk Container
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -116,9 +116,25 @@ def thread_work(market):
     """
     #make an instance of the bittrex class which takes market as a constructor arg
     bittrex = Bittrex(market)
-    mea = bittrex.calculate_mea(10, 'hour')
+
+
+    #print("Pandas MEA")
+    #mea = bittrex.mea_pandas(10, 'hour')
     time.sleep(10)
-    mea2 = bittrex.calculate_mea(20, 'hour')
+    #mea2 = bittrex.mea_pandas(20, 'hour')
+    #print("ema 10  ", market, " ", mea )
+    #print("ema 20  ", market, " ", mea2 )
+
+    #"oneMin", "fiveMin", "thirtyMin", "hour" and "day"
+    #print("My MEA")
+    mea = bittrex.calculate_mea(10, 'fiveMin')
+    time.sleep(10)
+    mea2 = bittrex.calculate_mea(20, 'fiveMin')
+    print("ema 10  ", market, " ", mea )
+    print("ema 20  ", market, " ", mea2 )
+
+
+    current_purchase = 99999999999
     balance = bittrex.get_balance()
     current_state = ""
     if mea > mea2:
@@ -128,32 +144,48 @@ def thread_work(market):
 
     while True:
         #test the historical data is getting called properly, interval, hour
-        mea = bittrex.calculate_mea(10, 'hour')
-        mea2 = bittrex.calculate_mea(20, 'hour')
+        #mea = bittrex.mea_pandas(10, 'hour')
+        #mea2 = bittrex.mea_pandas(20, 'hour')
+        mea = bittrex.calculate_mea(10, 'fiveMin')
+        time.sleep(10)
+        mea2 = bittrex.calculate_mea(20, 'fiveMin')
         balance = bittrex.get_balance()
+        latest_summary = bittrex.get_latest_summary()
         #if the smaller period mea has risen 1.5% above the larger period mea then buy
         if balance is not None:
             #if the inital state is trending up over time the price dips then we have to
             #re adjust the ciurrnet state so that the hunter will buy
-            if current_state == "InitTrendingUp" and mea <= (0.9985 * mea2):
+            if current_state == "InitTrendingUp" and mea < (1 * mea2):
                 current_state = "TrendingDown"
-            if mea >= (1.0015 * mea2) and current_state != "InitTrendingUp" and balance == 0:
+            if mea >= (1 * mea2) and current_state != "InitTrendingUp" and balance == 0:
                 latest_summary = bittrex.get_latest_summary()
                 ask = latest_summary['Ask']
                 qty = BTC_PER_PURCHASE / ask
                 bittrex.place_buy_order(qty, ask)
+                current_purchase = ask #this the price that the bot bought at
                 current_state = "TrendingUp"
             #if the smaller period mea has fallen 1.5% below the larger period mea then sell
-            if mea <= (0.9985 * mea2) and current_state == "TrendingUp" and balance > 0:
+
+            if mea <= (0.998 * mea2) and current_state == "TrendingUp" and balance > 0:
                 latest_summary = bittrex.get_latest_summary()
                 bid = latest_summary['Bid']
                 qty = balance
                 bittrex.place_sell_order(bid)
                 current_state = "TrendingDown"
+            if latest_summary['Last'] >= (current_purchase * 1.15):
+                bid = latest_summary['Bid']
+                qty = balance
+                bittrex.place_sell_order(bid)
+                current_state = "InitTrendingUp"
 
+                #testing a new plan for selling
+
+
+        print("Last Price: ",latest_summary['Last'])
+        print("Current Purchase: ", current_purchase)
         print("ema 10  ", market, " ", mea )
         print("ema 20  ", market, " ", mea2 )
-        time.sleep(300)
+        time.sleep(60)
 
 
 if __name__ == "__main__":

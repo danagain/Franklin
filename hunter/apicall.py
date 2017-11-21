@@ -69,7 +69,7 @@ class ApiCall:
                 sys.exit(1)
             for data in historical_data['result']:
                 closing_price.append(data['C'])
-            closing_price = closing_price[(len(closing_price)-(period + 1)) : -1] # PERIOD + 1 to seed EMA
+            #closing_price = closing_price[(len(closing_price)-(period + 1)) : -1] # PERIOD + 1 to seed EMA
             return closing_price
         except Exception as err:
             print ("Error sending request")

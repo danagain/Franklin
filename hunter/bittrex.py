@@ -7,6 +7,7 @@ from apicall import ApiCall
 import time
 import requests
 import json
+import pandas as pd
 
 class Bittrex:
     """
@@ -27,8 +28,6 @@ class Bittrex:
         balance_return = self.apicall.http_request('Balance', self.coin, 'Get')
         while type(balance_return) is not dict:
             balance_return = self.apicall.http_request('Balance', self.coin, 'Get')
-            result_return = balance_return['result']
-            current_balance = result_return['Balance']
             time.sleep(5)
         result_return = balance_return['result']
         current_balance = result_return['Balance']
@@ -130,3 +129,11 @@ class Bittrex:
             EMA_today = (last_closing_price[i + 1] * K) + (EMA_yesterday * (1 - K))
             EMA_yesterday = EMA_today
         return EMA_today
+
+
+    def mea_pandas(self, period, interval):
+        last_closing_price = self.apicall.get_historical(self.market, period, interval)
+        df = pd.DataFrame(last_closing_price)
+        ema = df.ewm(span=period,min_periods=0,adjust=True,ignore_na=False).mean()
+        test = ema.get_values()
+        return test[0][0]
