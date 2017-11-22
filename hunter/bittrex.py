@@ -54,13 +54,13 @@ class Bittrex:
         self.apicall.http_request("buy", purchase_dict, 'Post')
         #Lets wait 1 minuite, checking 3 times on the state of our purchase order
         for i in range(3):
-            time.sleep(20)
+            time.sleep(60)
             #Getting the current balance of our coin
             current_balance = self.get_balance()
             #If the balance of our coin is greater than zero, then our order has
             #been filled and we can exit our loop
             if current_balance > 0:
-                return "ActiveBuy"
+                return "TrendingUp"
         #At this point our loop is finished and it's been 1 min without our order filling
         self.cancel_order() #cancel the order
         return "NoBuy"
@@ -137,3 +137,7 @@ class Bittrex:
         ema = df.ewm(span=period,min_periods=0,adjust=True,ignore_na=False).mean()
         test = ema.get_values()
         return test[0][0]
+
+    def last_closing(self, period, interval):
+        last_closing_price = self.apicall.get_historical(self.market, period, interval)
+        return last_closing_price[-1]
