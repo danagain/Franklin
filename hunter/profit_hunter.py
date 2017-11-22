@@ -190,7 +190,7 @@ def thread_work(market):
             if downtrend_gap == True and mea2 <= mea*1.0015: #if our lower band plus 1.5 percent is above or equal to our upperband then we are back on the rise, jump on early
                 #we want to make a purchase here so we should check our balance
                 if balance == 0:
-                    ask = latest_summary['Ask'] #try and buy at the lower bands price
+                    ask = mea2 #try and buy at the lower bands price
                     qty = BTC_PER_PURCHASE / ask
                     current_state = bittrex.place_buy_order(qty, ask) #return the state depending on if our order is filled or not
                     if current_state == "TrendingUp":#if we know our order was filled ... set our current purchase price
@@ -204,7 +204,7 @@ def thread_work(market):
             if current_state == "TrendingDown":
                 latest_summary = bittrex.get_latest_summary() #getting the latest summary
                 #if there is a 2.25 percent gap in mea lines and the price is further 0.5 percent lower than hunter should go ahead and purchase
-                if mea2 >= 1.0225*mea and latest_summary['Ask'] <= (mea - (0.005*mea)) and balance == 0:
+                if mea2 >= 1.0225*mea and latest_summary['Ask'] <= (mea - (0.01*mea)) and balance == 0:
                     ask = latest_summary['Ask'] #pick up price
                     qty = BTC_PER_PURCHASE / ask
                     current_state = bittrex.place_buy_order(qty, ask) #return the state depending on if our order is filled or not
@@ -224,7 +224,7 @@ def thread_work(market):
                     #inittrendingup will prevent the bot from purchasing
 
             if current_state == "PanicSellPurchase":
-                if (latest_summary['Last'] >= (current_purchase * 1.014)): #lets try and sell our panicbuys for double
+                if (latest_summary['Last'] <= (current_purchase * 1.014)): #lets try and sell our panicbuys for double
                     bid = latest_summary['Last']
                     qty = balance
                     bittrex.place_sell_order(bid)
