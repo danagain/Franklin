@@ -1,6 +1,7 @@
 import requests
 import json
 import sys
+import time
 
 class ApiCall:
     def http_request(self, ptype, python_dict, method):
@@ -64,9 +65,11 @@ class ApiCall:
             endpoint_url = 'http://web-api:3000/api/historical/{0}/{1}'.format(market, query)
             resp = requests.get(url=endpoint_url)
             historical_data = json.loads(resp.text)
-            if historical_data is None:
-                print("No historical data, hunter out!")
-                sys.exit(1)
+            while historical_data is None or isinstance(historical_data, dict) == False:
+                endpoint_url = 'http://web-api:3000/api/historical/{0}/{1}'.format(market, query)
+                resp = requests.get(url=endpoint_url)
+                historical_data = json.loads(resp.text)
+                time.sleep(2)
             for data in historical_data['result']:
                 closing_price.append(data['C'])
             #closing_price = closing_price[(len(closing_price)-(period + 1)) : -1] # PERIOD + 1 to seed EMA
