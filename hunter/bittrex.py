@@ -7,7 +7,6 @@ from apicall import ApiCall
 import time
 import requests
 import json
-import pandas as pd
 
 class Bittrex:
     """
@@ -138,10 +137,11 @@ class Bittrex:
         #Seeding the first EMA to the closing price 10 days ago
         #EMA_yesterday = last_closing_price[0]
         """
+        #This comment section can be used for 15min ticks if needed
         EMA_yesterday = last_closing_price[0]
         counter = 0
         for i in range(len(last_closing_price)-1):
-            if counter % 2 == 0:
+            if counter % 3 == 0:
                 EMA_today = (last_closing_price[i + 1] * K) + (EMA_yesterday * (1 - K))
                 EMA_yesterday = EMA_today
             counter += 1
@@ -152,13 +152,6 @@ class Bittrex:
             EMA_yesterday = EMA_today
         return EMA_today
 
-
-    def mea_pandas(self, period, interval):
-        last_closing_price = self.apicall.get_historical(self.market, period, interval)
-        df = pd.DataFrame(last_closing_price)
-        ema = df.ewm(span=period,min_periods=0,adjust=True,ignore_na=False).mean()
-        test = ema.get_values()
-        return test[0][0]
 
     def last_closing(self, period, interval):
         last_closing_price = self.apicall.get_historical(self.market, period, interval)

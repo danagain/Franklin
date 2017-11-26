@@ -232,14 +232,19 @@ def thread_work(market):
                     else:
                         current_state = "TrendingDown"
                         """
+
+
             """
-            This is our stop loss logic
+            If the lines cross back then sell
             """
-            if current_state == "TrendingUp" and mea*0.995 < mea2:
+            if current_state == "TrendingUp" and mea*0.998 < mea2:
                 bid = latest_summary['Bid']
                 qty = balance
                 bittrex.place_sell_order(bid)
                 current_state = "TrendingDown"
+            """
+            This is our stop loss logic
+            """
             if current_state == "TrendingUp":
                 if (latest_summary['Last'] <= current_purchase * 0.98): #If somethings gone horrible wrong and we are down 5 percent on a purchase then we need to bail
                     bid = latest_summary['Last']
@@ -249,8 +254,11 @@ def thread_work(market):
                         current_state = "InitTrendingUp"#if our 10 mea is above the 21 then set the right state
                     else:
                         current_state = "StoppedLoss"# as long as state is not InitTrendingUp hunter will buy again at the right time
+            """
+            If we make a 15 percent gain then sell
+            """
             if current_state == "TrendingUp":
-                if latest_summary['Bid'] > current_purchase*1.10:
+                if latest_summary['Bid'] > current_purchase*1.15:
                     qty = balance
                     bittrex.place_sell_order(bid)
 
