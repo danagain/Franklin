@@ -269,12 +269,7 @@ def thread_work(market):
         print("ema 21  ", market, " ", mea2 )
         print("Current state:", current_state, "\n" )
         """
-
-        #sleep less so hunter can keep checking for sell price
-        if current_state == "TrendingUp":
-            time.sleep(10)
-        else:
-            time.sleep(60) #other wise brb 1 min
+        time.sleep(10)
 
 
 if __name__ == "__main__":
