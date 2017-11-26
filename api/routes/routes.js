@@ -1,15 +1,6 @@
 const express = require("express");
 const bittrex = require("node-bittrex-api");
-const mongoClient = require("mongodb").MongoClient;
-const mongoController = require("../controllers/mongo");
 const loggingController = require("../controllers/logger.js")();
-
-let mongoUrl;
-if (process.env.APP_ENV) {
-  mongoUrl = "mongodb://mongo:27017/franklin";
-} else {
-  mongoUrl = "mongodb://localhost:27017/franklin";
-}
 
 const BIT_API_KEY = process.env.BIT_API_KEY;
 
@@ -91,8 +82,6 @@ const routes = () => {
           "BTC-PAY",
           "BTC-NMR",
           "BTC-CVC"
-
-
         ]
       }
     ];
@@ -133,31 +122,7 @@ const routes = () => {
             },
             severity: "info"
           });
-          mongoClient.connect(mongoUrl, (err, db) => {
-            const collection = db.collection(
-              `transactions-${req.params.currency}`
-            );
-            mongoController
-              .insertDocuments(collection, data)
-              .then(data => {
-                db.close();
-                res.json(data);
-              })
-              .catch(err => {
-                loggingController.log({
-                  message: {
-                    info: err.message,
-                    headers: req.headers,
-                    body: req.body,
-                    method: req.method,
-                    route: req.route.path
-                  },
-                  severity: "error"
-                });
-                db.close();
-                res.status(500).json([{ error: err.message }]);
-              });
-          });
+          res.json(data);
         }
       }
     );
@@ -197,30 +162,7 @@ const routes = () => {
             },
             severity: "info"
           });
-          mongoClient.connect(mongoUrl, (err, db) => {
-            const collection = db.collection(
-              `transactions-${req.params.currency}`
-            );
-            mongoController
-              .insertDocuments(collection, data)
-              .then(data => {
-                db.close();
-                res.json(data);
-              })
-              .catch(err => {
-                loggingController.log({
-                  message: {
-                    info: err.message,
-                    headers: req.headers,
-                    body: req.body,
-                    method: req.method,
-                    route: req.route.path
-                  },
-                  severity: "error"
-                });
-                res.status(500).json([{ error: err.message }]);
-              });
-          });
+          res.json(data);
         }
       }
     );
@@ -251,8 +193,8 @@ const routes = () => {
   });
   router.route("/historical/:market").get((req, res, next) => {
     bittrex.sendCustomRequest(
-      `https://bittrex.com/Api/v2.0/pub/market/GetTicks?marketName=${req.params.market}&tickInterval=${req
-        .query.interval}`,
+      `https://bittrex.com/Api/v2.0/pub/market/GetTicks?marketName=${req.params
+        .market}&tickInterval=${req.query.interval}`,
       (data, err) => {
         if (err) {
           loggingController.log({
@@ -274,7 +216,8 @@ const routes = () => {
   });
   router.route("/summary/:market").get((req, res, next) => {
     bittrex.sendCustomRequest(
-      `https://bittrex.com/api/v1.1/public/getmarketsummary?market=${req.params.market}`,
+      `https://bittrex.com/api/v1.1/public/getmarketsummary?market=${req.params
+        .market}`,
       (data, err) => {
         if (err) {
           loggingController.log({
@@ -319,59 +262,6 @@ const routes = () => {
       true
     );
   });
-  router
-    .route("/bittrex/:currency")
-    .post((req, res, next) => {
-      mongoClient.connect(mongoUrl, (err, db) => {
-        const collection = db.collection(req.params.currency);
-        mongoController
-          .insertDocuments(collection, req.body)
-          .then(data => {
-            db.close();
-            res.json(data);
-          })
-          .catch(err => {
-            loggingController.log({
-              message: {
-                info: err.message,
-                headers: req.headers,
-                body: req.body,
-                method: req.method,
-                route: req.route.path
-              },
-              severity: "error"
-            });
-            db.close();
-            res.status(500).json([{ error: err.message }]);
-          });
-      });
-    })
-    .get((req, res) => {
-      mongoClient.connect(mongoUrl, (err, db) => {
-        const collection = db.collection(req.params.currency);
-        const documentCount = parseInt(req.query.n);
-        mongoController
-          .findDocuments(collection, documentCount)
-          .then(data => {
-            db.close();
-            res.json(data);
-          })
-          .catch(err => {
-            loggingController.log({
-              message: {
-                info: err.message,
-                headers: req.headers,
-                body: req.body,
-                method: req.method,
-                route: req.route.path
-              },
-              severity: "error"
-            });
-            db.close();
-            res.status(500).json([{ error: err.message }]);
-          });
-      });
-    });
   return router;
 };
 

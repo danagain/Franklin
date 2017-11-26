@@ -6,7 +6,6 @@ services:
     env_file:
       - .env
     links:
-      - mongo
       - splunk
   web-api:
     build: ./api
@@ -14,21 +13,11 @@ services:
     env_file:
       - .env
     links:
-      - mongo
       - splunk
     ports:
      - "3000:3000"
     expose:
       - 3000
-  mongo:
-    image: mongo
-    restart: always
-    volumes:
-        - ./scripts/imports:/tmp/dumps
-    ports:
-     - "27017:27017"
-    expose:
-     - 27017
   splunk:
     hostname: splunk
     image: splunk/splunk:6.5.3-monitor
