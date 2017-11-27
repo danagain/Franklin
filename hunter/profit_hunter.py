@@ -151,21 +151,22 @@ def thread_work(market):
             if current_state == "InitTrendingUp" and mea < (0.999 * mea2):
                 current_state = "TrendingDown"
             #If we the ema lines are forming the opening arc and we are in the right state to purchase, then enter the purchase logic
-            if mea > (1.0025 * mea2) and current_state != "InitTrendingUp" and balance == 0 and  gain_loss_percent <= 1.15:
+            while mea > (1.0025 * mea2) and current_state != "InitTrendingUp" and balance == 0 and  gain_loss_percent <= 1.15:
                 """
                 While we are in between these thresholds we only want to buy at a reasonable ask price
                 """
-                #If we get in here, I want to see what market
-                print("\n###############\n")
-                print("Buy Signal for: ", market)
-                print("\n###############\n")
                 ask = latest_summary['Ask']
                 if ask < mea*1.025:
+                    #If we get in here, I want to see what market
+                    print("\n###############\n")
+                    print("Buy Signal for: ", market)
+                    print("\n###############\n")
                     #ask = mea2
                     qty = BTC_PER_PURCHASE / ask
                     current_state = bittrex.place_buy_order(qty, ask)
                     if current_state == "TrendingUp":
                         current_purchase = ask #this the price that the bot bought at
+                time.sleep(10)
 
             """
             SELLING LOGIC
