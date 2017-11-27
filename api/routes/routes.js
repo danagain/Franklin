@@ -80,7 +80,19 @@ const routes = () => {
           "BTC-PTOY",
           "BTC-PAY",
           "BTC-NMR",
-          "BTC-CVC"
+          "BTC-CVC",
+          "BTC-NAV",
+          "BTC-NXT",
+          "BTC-VOX",
+          "BTC-DGD",
+          "BTC-MER",
+          "BTC-GNT",
+          "BTC-ADX",
+          "BTC-WAVES",
+          "BTC-TRST",
+          "BTC-ZEN",
+          "BTC-RISE",
+          "BTC-SNT"
         ]
       }
     ];

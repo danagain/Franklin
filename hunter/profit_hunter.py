@@ -150,11 +150,15 @@ def thread_work(market):
             #re adjust the ciurrnet state so that the hunter will buy
             if current_state == "InitTrendingUp" and mea < (1 * mea2):
                 current_state = "TrendingDown"
+            #If we the ema lines are forming the opening arc and we are in the right state to purchase, then enter the purchase logic
             if mea > (1.0025 * mea2) and (current_state != "InitTrendingUp" or current_state != "TrendingUp") and balance == 0 and mea2 > mea*0.99825 and gain_loss_percent <= 100.05:
                 """
                 While we are in between these thresholds we only want to buy at a reasonable ask price
                 """
+                #If we get in here, I want to see what market
+                print("\n###############\n")
                 print("Buy Signal for: ", market)
+                print("\n###############\n")
                 ask = latest_summary['Ask']
                 if ask < mea:
                     #ask = mea2
@@ -165,6 +169,8 @@ def thread_work(market):
                 #if the smaller period mea has fallen 1.5% below the larger period mea then sell
 
             """
+            Keeping all of this commented out section just for now.. 27/11/17
+
             - There has to be some logic that says while we are in a down trend, look for the moment we start to reverse
             the reversal might not end up in an uptrend but it should reverse up enough to make our static profit margin
             - When the down trend is occuring the 10mea should keep progressively moving further apart from the 21mea
@@ -187,7 +193,7 @@ def thread_work(market):
                     if current_state == "TrendingUp":#if we know our order was filled ... set our current purchase price
                         current_purchase = ask #this the price that the bot bought at
                         downtrend_gap = False#we know our order was filled so now we should reset our downtrend variable
-"""
+            """
 
             """
             - I think I have to make something that says, while we are in a down trend
@@ -235,6 +241,10 @@ def thread_work(market):
 
 
             """
+            SELLING LOGIC
+            """
+
+            """
             If the lines cross back then sell
             """
             if current_state == "TrendingUp" and mea*0.998 < mea2:
@@ -262,6 +272,7 @@ def thread_work(market):
                     qty = balance
                     bittrex.place_sell_order(bid)
 
+
         """
         print("Last Price: ",latest_summary['Last'])
         print("Current Purchase: ", current_purchase)
@@ -269,7 +280,7 @@ def thread_work(market):
         print("ema 21  ", market, " ", mea2 )
         print("Current state:", current_state, "\n" )
         """
-        time.sleep(10)
+        time.sleep(15)
 
 
 if __name__ == "__main__":
