@@ -22,12 +22,11 @@ class Bittrex:
     def get_balance(self):
         """
         Get the current balance for a given market
-        @param coin: The stock/market
         """
         balance_return = self.apicall.http_request('Balance', self.coin, 'Get')
         while type(balance_return) is not dict:
             balance_return = self.apicall.http_request('Balance', self.coin, 'Get')
-            time.sleep(5)
+            time.sleep(30)
         result_return = balance_return['result']
         current_balance = result_return['Balance']
         return current_balance
@@ -38,7 +37,7 @@ class Bittrex:
         summary = self.apicall.http_request("summary", market, 'Get')
         while summary == None or isinstance(summary, dict) == False :
             summary = self.apicall.http_request("summary", market, 'Get')
-            time.sleep(1)
+            time.sleep(30)
 
         return summary['result'][0]
 
@@ -83,7 +82,7 @@ class Bittrex:
             'ConditionType': 'NONE', 'Target': 0}
         #Sending the purchase request to our web-api
         self.apicall.http_request("sell", sell_dict, 'Post')
-        time.sleep(4)
+        time.sleep(30)
         return "SellPlaced"
 
     def cancel_order(self):
@@ -96,7 +95,7 @@ class Bittrex:
         get_uuid = self.apicall.http_request('orders', market_dict, 'Get')
         while get_uuid == None or isinstance(get_uuid, dict) == False:
             get_uuid = self.apicall.http_request('orders', market_dict, 'Get')
-            time.sleep(2)
+            time.sleep(30)
 
 
         result_return = get_uuid['result'] #get the uuid from the returned request
@@ -123,7 +122,7 @@ class Bittrex:
         last_closing_price = self.apicall.get_historical(self.market, period, interval)
         while last_closing_price == None:
             last_closing_price = self.apicall.get_historical(self.market, period, interval)
-            time.sleep(1)
+            time.sleep(30)
 
         #seed = self.calculate_sma(period, interval)
         #EMA [today] = (Price [today] x K) + (EMA [yesterday] x (1 – K))
