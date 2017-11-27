@@ -20,7 +20,7 @@ const routes = () => {
         if (err) {
           loggingController.log({
             message: {
-              info: err.message,
+              error: err,
               headers: req.headers,
               uuid: req.params.uuid,
               market: req.params.currency,
@@ -36,7 +36,6 @@ const routes = () => {
       true
     );
   });
-
   router.route("/markets").get((req, res, next) => {
     // This is where we change the markets we are working with - This is the ONLY place also :)
     const markets = [
@@ -102,7 +101,7 @@ const routes = () => {
         if (err) {
           loggingController.log({
             message: {
-              info: err.message,
+              error: err,
               headers: req.headers,
               body: req.body,
               method: req.method,
@@ -142,7 +141,7 @@ const routes = () => {
         if (err) {
           loggingController.log({
             message: {
-              info: err.message,
+              error: err,
               headers: req.headers,
               body: req.body,
               method: req.method,
@@ -175,7 +174,7 @@ const routes = () => {
         if (err) {
           loggingController.log({
             message: {
-              info: err.message,
+              error: err,
               headers: req.headers,
               uuid: req.params.uuid,
               method: req.method,
@@ -199,7 +198,7 @@ const routes = () => {
         if (err) {
           loggingController.log({
             message: {
-              info: err.message,
+              error: err,
               headers: req.headers,
               method: req.method,
               route: req.route.path
@@ -222,7 +221,7 @@ const routes = () => {
         if (err) {
           loggingController.log({
             message: {
-              info: err.message,
+              error: err,
               headers: req.headers,
               market: req.params.market,
               method: req.method,
@@ -246,7 +245,7 @@ const routes = () => {
         if (err) {
           loggingController.log({
             message: {
-              info: err.message,
+              error: err,
               headers: req.headers,
               market: req.params.currency,
               method: req.method,
