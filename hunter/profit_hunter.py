@@ -123,7 +123,6 @@ def thread_work(market):
     mea2 = bittrex.calculate_mea(21, 'hour')
     print("ema 10  ", market, " ", mea )
     print("ema 21  ", market, " ", mea2 )
-    downtrend_gap = False
     current_purchase = 99999999999
     balance = bittrex.get_balance()
     current_state = ""
@@ -148,10 +147,10 @@ def thread_work(market):
             """
             #if the inital state is trending up over time the price dips then we have to
             #re adjust the ciurrnet state so that the hunter will buy
-            if current_state == "InitTrendingUp" and mea < (1 * mea2):
+            if current_state == "InitTrendingUp" and mea < (0.995 * mea2):
                 current_state = "TrendingDown"
             #If we the ema lines are forming the opening arc and we are in the right state to purchase, then enter the purchase logic
-            if mea > (1.0025 * mea2) and (current_state != "InitTrendingUp" or current_state != "TrendingUp") and balance == 0 and mea2 > mea*0.99825 and gain_loss_percent <= 100.05:
+            if mea > (1.0025 * mea2) and (current_state != "InitTrendingUp" or current_state != "TrendingUp") and balance == 0 and mea2 > (mea * 0.99825) and gain_loss_percent <= 1.15:
                 """
                 While we are in between these thresholds we only want to buy at a reasonable ask price
                 """
@@ -166,79 +165,6 @@ def thread_work(market):
                     current_state = bittrex.place_buy_order(qty, ask)
                     if current_state == "TrendingUp":
                         current_purchase = ask #this the price that the bot bought at
-                #if the smaller period mea has fallen 1.5% below the larger period mea then sell
-
-            """
-            Keeping all of this commented out section just for now.. 27/11/17
-
-            - There has to be some logic that says while we are in a down trend, look for the moment we start to reverse
-            the reversal might not end up in an uptrend but it should reverse up enough to make our static profit margin
-            - When the down trend is occuring the 10mea should keep progressively moving further apart from the 21mea
-            - If we rechonise that during the down trend there was quite a large gap in price between the two bands, say 0.002  (2 percent)
-            We then say well we know there has been a decent dip so when the 10 band is 1 percent away from the 21 band then its clear the price is coming back up
-            and we should get in early
-            """
-            """
-            if current_state == "TrendingDown":
-                #check to see if our bands are 2 percent apart
-                if mea2 > mea*1.003: #if our 21band is greater than our 10 band plus 2 percent, then yes there is a gap
-                    downtrend_gap = True #set our flag
-            #now we have a down trend gap identifier we should look to see when the gap between our bands is closing up
-            if downtrend_gap == True and mea2 <= mea*1.0015: #if our lower band plus 1.5 percent is above or equal to our upperband then we are back on the rise, jump on early
-                #we want to make a purchase here so we should check our balance
-                if balance == 0:
-                    ask = mea2 - (0.001*mea2) #try and buy at the lower bands price
-                    qty = BTC_PER_PURCHASE / ask
-                    current_state = bittrex.place_buy_order(qty, ask) #return the state depending on if our order is filled or not
-                    if current_state == "TrendingUp":#if we know our order was filled ... set our current purchase price
-                        current_purchase = ask #this the price that the bot bought at
-                        downtrend_gap = False#we know our order was filled so now we should reset our downtrend variable
-            """
-
-            """
-            - I think I have to make something that says, while we are in a down trend
-            """
-
-            """
-            PANIC SELL PURCHASES
-            - When the price is falling we want to catch panic sellers, lets look for oppourtunities at very low prices
-            """
-
-            """
-            if current_state == "TrendingDown" and downtrend_gap == True:
-                latest_summary = bittrex.get_latest_summary() #getting the latest summary
-                #if there is a 2.25 percent gap in mea lines and the price is further 0.5 percent lower than hunter should go ahead and purchase
-                if latest_summary['Ask'] <= (mea - (0.06*mea)) and balance == 0:
-                    ask = latest_summary['Ask'] #pick up price
-                    qty = BTC_PER_PURCHASE / ask
-                    current_state = bittrex.place_buy_order(qty, ask) #return the state depending on if our order is filled or not
-                    if current_state == "TrendingUp":#if we know our order was filled ... set our current purchase price
-                        current_purchase = ask #this the price that the bot bought at
-                        current_state = "PanicSellPurchase" #update to notify hunter that we have purchased a panic sell
-            """
-            #Selling logic
-            """
-            #while we are making gainz, if the price rises past 0.07 percent gain lets bail
-            if current_state == "TrendingUp":
-                if (latest_summary['Bid'] >= (current_purchase * 1.05)):
-                    bid = latest_summary['Bid']
-                    qty = balance
-                    bittrex.place_sell_order(bid)
-                    current_state = "InitTrendingUp"#because we sold off at a static value, price needs to fall below MEA's before we purchase again
-                    #inittrendingup will prevent the bot from purchasing
-
-            if current_state == "PanicSellPurchase":
-                if (latest_summary['Bid'] <= (current_purchase * 1.04)): #lets try and sell our panicbuys for double
-                    bid = latest_summary['Bid']
-                    qty = balance
-                    bittrex.place_sell_order(bid)
-                    if mea > mea2:
-                        current_state = "InitTrendingUp"#because we sold off at a static value, price needs to fall below MEA's before we purchase again
-                        #inittrendingup will prevent the bot from purchasing
-                    else:
-                        current_state = "TrendingDown"
-                        """
-
 
             """
             SELLING LOGIC
@@ -247,7 +173,7 @@ def thread_work(market):
             """
             If the lines cross back then sell
             """
-            if current_state == "TrendingUp" and mea*0.998 < mea2:
+            if current_state == "TrendingUp" and (mea * 0.998) < mea2:
                 bid = latest_summary['Bid']
                 qty = balance
                 bittrex.place_sell_order(bid)
@@ -256,7 +182,7 @@ def thread_work(market):
             This is our stop loss logic
             """
             if current_state == "TrendingUp":
-                if (latest_summary['Last'] <= current_purchase * 0.98): #If somethings gone horrible wrong and we are down 5 percent on a purchase then we need to bail
+                if latest_summary['Last'] <= (current_purchase * 0.95): #If somethings gone horrible wrong and we are down 5 percent on a purchase then we need to bail
                     bid = latest_summary['Last']
                     qty = balance
                     bittrex.place_sell_order(bid)
@@ -268,18 +194,15 @@ def thread_work(market):
             If we make a 15 percent gain then sell
             """
             if current_state == "TrendingUp":
-                if latest_summary['Bid'] > current_purchase*1.15:
+                if latest_summary['Bid'] > (current_purchase * 1.15):
                     qty = balance
                     bittrex.place_sell_order(bid)
 
-
-        """
         print("Last Price: ",latest_summary['Last'])
         print("Current Purchase: ", current_purchase)
         print("ema 10  ", market, " ", mea )
         print("ema 21  ", market, " ", mea2 )
         print("Current state:", current_state, "\n" )
-        """
         time.sleep(15)
 
 
