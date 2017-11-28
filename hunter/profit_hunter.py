@@ -166,6 +166,7 @@ def thread_work(market):
                     current_state = bittrex.place_buy_order(qty, ask)
                     if current_state == "TrendingUp":
                         current_purchase = ask #this the price that the bot bought at
+                        break
                 time.sleep(10)
 
             """
