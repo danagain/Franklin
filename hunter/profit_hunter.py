@@ -151,7 +151,7 @@ def thread_work(market):
             if current_state == "InitTrendingUp" and mea < (0.999 * mea2):
                 current_state = "TrendingDown"
             #If we the ema lines are forming the opening arc and we are in the right state to purchase, then enter the purchase logic
-            while mea > (1.0025 * mea2) and current_state != "InitTrendingUp" and balance == 0 and  gain_loss_percent <= 1.15:
+            while mea > (1.0025 * mea2) and (current_state != "InitTrendingUp" or current_state != "TrendingUp") and balance == 0 and  gain_loss_percent <= 1.15:
                 """
                 While we are in between these thresholds we only want to buy at a reasonable ask price
                 """
