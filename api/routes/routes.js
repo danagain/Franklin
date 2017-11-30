@@ -69,7 +69,6 @@ const routes = () => {
           "BTC-QTUM",
           "BTC-OK",
           "BTC-XMR",
-          "BTC-BAY",
           "BTC-TRUST",
           "BTC-NXS",
           "BTC-MONA",
@@ -89,7 +88,6 @@ const routes = () => {
           "BTC-GNT",
           "BTC-ADX",
           "BTC-WAVES",
-          "BTC-TRST",
           "BTC-ZEN",
           "BTC-RISE",
           "BTC-SNT"

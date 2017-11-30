@@ -127,6 +127,8 @@ def thread_work(market):
     current_purchase = 99999999999
     balance = bittrex.get_balance()
     current_state = ""
+    counter = 0
+    init_ticker = 0
     if mea > mea2:
         current_state = "InitTrendingUp"
     else:
@@ -136,6 +138,9 @@ def thread_work(market):
         mea = bittrex.calculate_mea(10, 'hour')
         time.sleep(10)
         mea2 = bittrex.calculate_mea(21, 'hour')
+        if counter == 0:
+            init_ticker = mea
+        counter = 1
         balance = bittrex.get_balance()
         latest_summary = bittrex.get_latest_summary()
         last_closing_price = bittrex.last_closing(1, 'hour')
@@ -151,10 +156,14 @@ def thread_work(market):
             if current_state == "InitTrendingUp" and mea < (0.999 * mea2):
                 current_state = "TrendingDown"
             #If we the ema lines are forming the opening arc and we are in the right state to purchase, then enter the purchase logic
-            while mea > (1.0025 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp" and balance == 0 and  gain_loss_percent <= 1.06:
+            while mea > (1.025 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp" and balance == 0 and  gain_loss_percent <= 1.15:
                 """
                 While we are in between these thresholds we only want to buy at a reasonable ask price
                 """
+                mea = bittrex.calculate_mea(10, 'hour')
+                time.sleep(10)
+                mea2 = bittrex.calculate_mea(21, 'hour')
+                latest_summary = bittrex.get_latest_summary()
                 ask = latest_summary['Ask']
                 if ask < mea*1.025:
                     #If we get in here, I want to see what market
@@ -167,7 +176,7 @@ def thread_work(market):
                     if current_state == "TrendingUp":
                         current_purchase = ask #this the price that the bot bought at
                         break
-                time.sleep(10)
+                time.sleep(40)
 
             """
             SELLING LOGIC
@@ -176,6 +185,11 @@ def thread_work(market):
             If the lines cross back then sell
             """
             while current_state == "TrendingUp":
+                mea = bittrex.calculate_mea(10, 'hour')
+                time.sleep(10)
+                mea2 = bittrex.calculate_mea(21, 'hour')
+                balance = bittrex.get_balance()
+                latest_summary = bittrex.get_latest_summary()
                 if current_state == "TrendingUp" and (mea * 0.998) < mea2:
                     bid = latest_summary['Bid']
                     qty = balance
@@ -196,24 +210,26 @@ def thread_work(market):
                 If we make a 15 percent gain then sell
                 """
                 if current_state == "TrendingUp":
-                    if latest_summary['Bid'] > (current_purchase * 1.15):
+                    if latest_summary['Bid'] > (current_purchase * 1.10):
                         bid = latest_summary['Bid']
                         bittrex.place_sell_order(bid)
                         current_state = "InitTrendingUp"
 
-                if balance > 0 and (latest_summary['Last'] * balance) <= (0.00100 * 0.97):
+                if balance > 0 and (latest_summary['Last'] * balance) <= (0.00100 * 0.95):
                         bid = latest_summary['Last']
                         bittrex.place_sell_order(bid)
                         current_state = "StoppedLoss"
-                time.sleep(30)
+                time.sleep(60)
 
         print("Last Price: ",latest_summary['Last'])
         print("Current Purchase: ", current_purchase)
         print("ema 10  ", market, " ", mea )
         print("ema 21  ", market, " ", mea2 )
         print("Current state:", current_state, "\n" )
-
-        time.sleep(300)
+        if init_ticker == mea:
+            time.sleep(120)
+        else:
+            time.sleep(1800)
 
 
 if __name__ == "__main__":
