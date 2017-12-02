@@ -156,7 +156,7 @@ def thread_work(market):
             if current_state == "InitTrendingUp" and mea < (0.999 * mea2):
                 current_state = "TrendingDown"
             #If we the ema lines are forming the opening arc and we are in the right state to purchase, then enter the purchase logic
-            while mea > (1.025 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp" and balance == 0 and  gain_loss_percent <= 1.15:
+            while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp" and balance == 0 and  gain_loss_percent <= 1.15:
                 """
                 While we are in between these thresholds we only want to buy at a reasonable ask price
                 """
@@ -218,7 +218,7 @@ def thread_work(market):
                 if balance > 0 and (latest_summary['Last'] * balance) <= (0.00100 * 0.95):
                         bid = latest_summary['Last']
                         bittrex.place_sell_order(bid)
-                        current_state = "StoppedLoss"
+                        current_state = "InitTrendingUp" # this will stop hunter buying the same thing and losing possibly multiple times
                 time.sleep(60)
 
         print("Last Price: ",latest_summary['Last'])

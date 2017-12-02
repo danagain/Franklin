@@ -85,7 +85,6 @@ const routes = () => {
           "BTC-VOX",
           "BTC-DGD",
           "BTC-MER",
-          "BTC-GNT",
           "BTC-ADX",
           "BTC-WAVES",
           "BTC-ZEN",
