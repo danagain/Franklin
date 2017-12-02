@@ -51,6 +51,30 @@ class ApiCall:
              print(error)
              sys.exit(1)
 
+    def get_last_ticker_data(self, market, period, interval):
+        """
+        This function is needed to return all of the data, not just the closing price
+        back to the hunter.
+        """
+        closing_price = []
+        try:
+            query = '?interval={0}'.format(interval)
+            endpoint_url = 'http://web-api:3000/api/historical/{0}/{1}'.format(market, query)
+            resp = requests.get(url=endpoint_url)
+            historical_data = json.loads(resp.text)
+            while historical_data is None or isinstance(historical_data, dict) == False:
+                endpoint_url = 'http://web-api:3000/api/historical/{0}/{1}'.format(market, query)
+                resp = requests.get(url=endpoint_url)
+                historical_data = json.loads(resp.text)
+                time.sleep(2)
+            for data in historical_data['result']:
+                closing_price.append(data) # append the entire dict
+            #closing_price = closing_price[(len(closing_price)-(period + 1)) : -1] # PERIOD + 1 to seed EMA
+            return closing_price
+        except Exception as err:
+            print ("Error sending request")
+            print (str(err))
+
     def get_historical(self, market, period, interval):
         """
         This function calcualtes our moving exponential averages that are used

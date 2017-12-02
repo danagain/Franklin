@@ -117,6 +117,7 @@ def thread_work(market):
     #make an instance of the bittrex class which takes market as a constructor arg
     print("made it in the thread work")
     bittrex = Bittrex(market)
+    apicall = ApiCall()
     time.sleep(10)
     #"hour", "hour", "thirtyMin", "hour" and "day"
     mea = bittrex.calculate_mea(10, 'hour')
@@ -151,6 +152,8 @@ def thread_work(market):
             Buying Logic
 
             """
+            # test my api call function
+
             #if the inital state is trending up over time the price dips then we have to
             #re adjust the ciurrnet state so that the hunter will buy
             if current_state == "InitTrendingUp" and mea < (0.999 * mea2):
@@ -185,6 +188,10 @@ def thread_work(market):
             If the lines cross back then sell
             """
             while current_state == "TrendingUp":
+                ticker_data = apicall.get_last_ticker_data(market, 1, 'hour')
+                print(ticker_data[0]['C'])
+                print(ticker_data[0]['O'])
+                last_closing_price = bittrex.last_closing(1, 'hour') # While we are in sell mode lets check to see if we have bought in on a pump, (check the opening and closing of last ticker)
                 mea = bittrex.calculate_mea(10, 'hour')
                 time.sleep(10)
                 mea2 = bittrex.calculate_mea(21, 'hour')
@@ -195,6 +202,17 @@ def thread_work(market):
                     qty = balance
                     bittrex.place_sell_order(bid)
                     current_state = "TrendingDown"
+                """
+                This is to detect and bail out of pump and dumps at a small profit
+
+                I was going to add some conditions to make sure we are in profit range, but im going to just
+                see how selling no matter what, when the ticker rolls over from a pump
+                """
+                if (ticker_data[0]['C']/ ticker_data[0]['O']) > 1.1: # if the pump in the last hour was greater than a 10 percent rise then lets get out straight away
+                    bid = latest_summary['Bid']
+                    bittrex.place_sell_order(bid)
+                    current_state = "InitTrendingUp"
+
                 """
                 This is our stop loss logic
                 """
@@ -219,6 +237,13 @@ def thread_work(market):
                         bid = latest_summary['Last']
                         bittrex.place_sell_order(bid)
                         current_state = "InitTrendingUp" # this will stop hunter buying the same thing and losing possibly multiple times
+
+                if market == "BTC-OMG" and balance > 0 and latest_summary['Bid'] > current_purchase * 1.02: # take 2 percent gain, the market seems to spike a lot
+                        bid = latest_summary['Bid']
+                        bittrex.place_sell_order(bid)
+                        current_state = "InitTrendingUp" # this will stop hunter buying the same thing and losing possibly multiple times
+
+
                 time.sleep(60)
 
         print("Last Price: ",latest_summary['Last'])
