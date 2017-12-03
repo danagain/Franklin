@@ -173,7 +173,7 @@ def thread_work(market):
                 time.sleep(40)
 
             """
-            SELLING LOGIC
+            Selling Logic
             """
             while current_state == "TrendingUp":
                 ticker_data = apicall.get_last_ticker_data(market, 1, 'hour')
@@ -234,7 +234,7 @@ def thread_work(market):
                 if balance > 0 and (latest_summary['Last'] * balance) <= (0.00100 * 0.95):
                         bid = latest_summary['Last']
                         bittrex.place_sell_order(bid)
-                        current_state = "InitTrendingUp" # this will stop hunter buying the same thing and losing possibly multiple times
+                        current_state = "InitTrendingUp" #this will stop hunter buying the same thing and losing possibly multiple times
 
                 """
                 Need to add code to detect bitcoin movements as they effect alt coin movements
@@ -242,7 +242,6 @@ def thread_work(market):
                 - When bitcoins moving upwards it usually pushes the btc market backwards.
                 If btc starts moving upwards, purchases at a profit will be sold
                 """
-
                 time.sleep(60)
 
         print("Last Price: ",latest_summary['Last'])
@@ -259,12 +258,9 @@ def thread_work(market):
 if __name__ == "__main__":
     print("Waiting for correct amount of data")
     time.sleep(3)
-    #time.sleep(time_for_data)
     apicall = ApiCall() #instance of the ApiCall class
     markets = apicall.get_markets() # Get all of the markets from the WEB-API
-    # Add 15 min wait here for profit testing phase
     THREADS = []
-
     for c in range(0, len(markets)):
         t = MyThread(markets[c])
         t.setDaemon(True)
