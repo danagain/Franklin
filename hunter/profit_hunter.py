@@ -238,12 +238,6 @@ def thread_work(market):
                         bittrex.place_sell_order(bid)
                         current_state = "InitTrendingUp" # this will stop hunter buying the same thing and losing possibly multiple times
 
-                if market == "BTC-OMG" and balance > 0 and latest_summary['Bid'] > current_purchase * 1.02: # take 2 percent gain, the market seems to spike a lot
-                        bid = latest_summary['Bid']
-                        bittrex.place_sell_order(bid)
-                        current_state = "InitTrendingUp" # this will stop hunter buying the same thing and losing possibly multiple times
-
-
                 time.sleep(60)
 
         print("Last Price: ",latest_summary['Last'])
