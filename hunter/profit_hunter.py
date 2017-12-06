@@ -144,12 +144,16 @@ def thread_work(market):
         if balance is not None:
             """
             Buying Logic
-
             """
             #if  inital state is trending up over time the price dips then we have to
             #re adjust the ciurrnet state so that the hunter will buy
             if current_state == "InitTrendingUp" and mea < (0.999 * mea2):
                 current_state = "TrendingDown"
+
+            """
+            add logic for breakout trade
+            """
+
             #If  ema lines are forming the opening arc and we are in the right state to purchase, then enter the purchase logic
             while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp" and balance == 0 and  gain_loss_percent <= 1.15:
                 """
@@ -160,7 +164,7 @@ def thread_work(market):
                 mea2 = bittrex.calculate_mea(21, 'hour')
                 latest_summary = bittrex.get_latest_summary()
                 ask = latest_summary['Ask']
-                if ask < mea * 1.025:
+                if ask < mea * 1.015:
                     #If we get in here, I want to see what market
                     print("\n###############\n")
                     print("Buy Signal for: ", market)
@@ -267,6 +271,6 @@ if __name__ == "__main__":
         THREADS.append(t)
     for i in range(0, len(markets)):
         THREADS[i].start()
-        time.sleep(10)
+        time.sleep(20)
     while threading.active_count() > 0:
         time.sleep(1000)

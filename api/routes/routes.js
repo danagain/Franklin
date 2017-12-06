@@ -89,7 +89,9 @@ const routes = () => {
           "BTC-WAVES",
           "BTC-ZEN",
           "BTC-RISE",
-          "BTC-SNT"
+          "BTC-SNT",
+          "BTC-MCO",
+          "BTC-GUP"
         ]
       }
     ];

@@ -66,7 +66,7 @@ class ApiCall:
                 endpoint_url = 'http://web-api:3000/api/historical/{0}/{1}'.format(market, query)
                 resp = requests.get(url=endpoint_url)
                 historical_data = json.loads(resp.text)
-                time.sleep(2)
+                time.sleep(55)
             for data in historical_data['result']:
                 closing_price.append(data) # append the entire dict
             #closing_price = closing_price[(len(closing_price)-(period + 1)) : -1] # PERIOD + 1 to seed EMA
@@ -93,7 +93,7 @@ class ApiCall:
                 endpoint_url = 'http://web-api:3000/api/historical/{0}/{1}'.format(market, query)
                 resp = requests.get(url=endpoint_url)
                 historical_data = json.loads(resp.text)
-                time.sleep(2)
+                time.sleep(52)
             for data in historical_data['result']:
                 closing_price.append(data['C'])
             #closing_price = closing_price[(len(closing_price)-(period + 1)) : -1] # PERIOD + 1 to seed EMA
