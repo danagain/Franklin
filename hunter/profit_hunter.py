@@ -196,7 +196,7 @@ def thread_work(market):
             """
             Selling Logic
             """
-            while current_state == "TrendingUp":
+        while current_state == "TrendingUp":
                 ticker_data = apicall.get_last_ticker_data(market, 1, 'hour')
                 print(ticker_data[0]['C'])
                 print(ticker_data[0]['O'])
