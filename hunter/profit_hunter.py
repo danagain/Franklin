@@ -142,76 +142,56 @@ def thread_work(market):
         latest_summary = bittrex.get_latest_summary()
         last_closing_price = bittrex.last_closing(1, 'hour')
         gain_loss_percent = latest_summary['Last']/latest_summary['PrevDay']
-        #if balance is not None:# swap this in here for working with trail account
-            if market != "USDT-BTC" and balance > 0:
-                ask = latest_summary['Bid']
-                bittrex.place_sell_order(ask)
-
-
-
-
-            """
-            Buying Logic
-            """
-            #if  inital state is trending up over time the price dips then we have to
-            #re adjust the ciurrnet state so that the hunter will buy
-            if current_state == "InitTrendingUp" and mea < (0.999 * mea2):
-                current_state = "TrendingDown"
-
-            """
-            add logic for breakout trade
-            """
-
+        if current_state == "InitTrendingUp" and mea < (0.999 * mea2):
+            current_state = "TrendingDown"
             #If  ema lines are forming the opening arc and we are in the right state to purchase, then enter the purchase logic
-            if balance is not None:
-                while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp" and balance == 0 and  gain_loss_percent <= 1.15:
+        if balance is not None:
+            while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp" and balance == 0 and  gain_loss_percent <= 1.15:
                 #while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp"  and  gain_loss_percent <= 1.15: # TRAIL ACCOUNT
-                    """
-                    While we are in between these thresholds we only want to buy at a reasonable ask price
-                    """
-                    mea = bittrex.calculate_mea(10, 'hour')
-                    time.sleep(10)
-                    mea2 = bittrex.calculate_mea(21, 'hour')
-                    latest_summary = bittrex.get_latest_summary()
-                    ask = latest_summary['Ask']
-                    if ask < mea * 1.015:
+                """
+                While we are in between these thresholds we only want to buy at a reasonable ask price
+                """
+                mea = bittrex.calculate_mea(10, 'hour')
+                time.sleep(10)
+                mea2 = bittrex.calculate_mea(21, 'hour')
+                latest_summary = bittrex.get_latest_summary()
+                ask = latest_summary['Ask']
+                if ask < mea * 1.015:
                         #If we get in here, I want to see what market
-                        for i in range(10):
-                            print("\n###############\n")
-                            print("Buy Signal for: ", market)
-                            print("\n###############\n")
-                        qty = BTC_PER_PURCHASE / ask
-                        current_state = bittrex.place_buy_order(qty, ask)
-                        if current_state == "TrendingUp":
-                            current_purchase = ask #price that the bot bought at
-                            break
-                    time.sleep(40)
+                    for i in range(10):
+                        print("\n###############\n")
+                        print("Buy Signal for: ", market)
+                        print("\n###############\n")
+                    qty = BTC_PER_PURCHASE / ask
+                    current_state = bittrex.place_buy_order(qty, ask)
+                    if current_state == "TrendingUp":
+                        current_purchase = ask #price that the bot bought at
+                        break
+                time.sleep(40)
 
-                else:
-                    while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp" and  gain_loss_percent <= 1.15:
+        else:
+            while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp" and  gain_loss_percent <= 1.15:
                     #while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp"  and  gain_loss_percent <= 1.15: # TRAIL ACCOUNT
-                        """
-                        While we are in between these thresholds we only want to buy at a reasonable ask price
-                        """
-                        mea = bittrex.calculate_mea(10, 'hour')
-                        time.sleep(10)
-                        mea2 = bittrex.calculate_mea(21, 'hour')
-                        latest_summary = bittrex.get_latest_summary()
-                        ask = latest_summary['Ask']
-                        if ask < mea * 1.015:
+                """
+                While we are in between these thresholds we only want to buy at a reasonable ask price
+                """
+                mea = bittrex.calculate_mea(10, 'hour')
+                time.sleep(10)
+                mea2 = bittrex.calculate_mea(21, 'hour')
+                latest_summary = bittrex.get_latest_summary()
+                ask = latest_summary['Ask']
+                if ask < mea * 1.015:
                             #If we get in here, I want to see what market
-                            for i in range(10):
-                                print("\n###############\n")
-                                print("Buy Signal for: ", market)
-                                print("\n###############\n")
-                            qty = BTC_PER_PURCHASE / ask
-                            current_state = bittrex.place_buy_order(qty, ask)
-                            if current_state == "TrendingUp":
-                                current_purchase = ask #price that the bot bought at
-                                break
-                        time.sleep(40)
-
-
+                    for i in range(10):
+                        print("\n###############\n")
+                        print("Buy Signal for: ", market)
+                        print("\n###############\n")
+                    qty = BTC_PER_PURCHASE / ask
+                    current_state = bittrex.place_buy_order(qty, ask)
+                    if current_state == "TrendingUp":
+                        current_purchase = ask #price that the bot bought at
+                        break
+                time.sleep(40)
 
             """
             Selling Logic
