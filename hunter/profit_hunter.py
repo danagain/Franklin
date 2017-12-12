@@ -263,7 +263,7 @@ def thread_work(market):
                 - When bitcoins moving upwards it usually pushes the btc market backwards.
                 If btc starts moving upwards, purchases at a profit will be sold
                 """
-                time.sleep(60)
+                time.sleep(40)
 
         print("Last Price: ",latest_summary['Last'])
         print("Current Purchase: ", current_purchase)
@@ -271,7 +271,7 @@ def thread_work(market):
         print("ema 21  ", market, " ", mea2 )
         print("Current state:", current_state, "\n" )
         if init_ticker == mea:
-            time.sleep(1800)
+            time.sleep(120)
         else:
             time.sleep(1800)
 
@@ -288,6 +288,6 @@ if __name__ == "__main__":
         THREADS.append(t)
     for i in range(0, len(markets)):
         THREADS[i].start()
-        time.sleep(40)
+        time.sleep(20)
     while threading.active_count() > 0:
         time.sleep(1000)

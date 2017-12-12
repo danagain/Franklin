@@ -61,8 +61,12 @@ class Bittrex:
             current_balance = self.get_balance()
             #If the balance of our coin is greater than zero, then our order has
             #been filled and we can exit our loop
-            if current_balance > 0:
-                return "TrendingUp"
+            if current_balance == None:
+                return "CouldNotBuy"
+            else:
+                if current_balance > 0:
+                    return "TrendingUp"
+
         #At this point our loop is finished and it's been 1 min without our order filling
         self.cancel_order() #cancel the order
         return "NoBuy"
