@@ -14,8 +14,8 @@ import ssl
 from bittrex import Bittrex
 from apicall import ApiCall
 
-BTC_PER_PURCHASE = 0.00100000
-
+BTC_PER_PURCHASE = 0.00150000
+BTC_BALANCE = 0
 # For talking with Splunk Container
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -106,7 +106,11 @@ def send_event(splunk_host, auth_token, log_data):
 
    return post_success
 
-
+def track_btc_balance(market, bittrex):
+    if market == "BTC-ETH":
+        balance = bittrex.get_btc_balance()
+        global BTC_BALANCE
+        BTC_BALANCE = balance
 
 def thread_work(market):
     """
@@ -122,6 +126,8 @@ def thread_work(market):
     print("ema 21  ", market, " ", mea2 )
     current_purchase = 99999999999
     balance = bittrex.get_balance()
+    track_btc_balance(market, bittrex)
+    print("BTC BALANCE: ", BTC_BALANCE)
     current_state = ""
     counter = 0
     init_ticker = 0
@@ -138,6 +144,7 @@ def thread_work(market):
             init_ticker = mea
         counter = 1
         balance = bittrex.get_balance()
+        track_btc_balance(market, bittrex)
         print("balance for marekt: ", market, "is: ", balance)
         latest_summary = bittrex.get_latest_summary()
         last_closing_price = bittrex.last_closing(1, 'hour')
@@ -155,6 +162,7 @@ def thread_work(market):
                 time.sleep(10)
                 mea2 = bittrex.calculate_mea(21, 'hour')
                 latest_summary = bittrex.get_latest_summary()
+                track_btc_balance(market, bittrex)
                 ask = latest_summary['Ask']
                 if ask < mea * 1.015:
                         #If we get in here, I want to see what market
@@ -179,6 +187,7 @@ def thread_work(market):
                 time.sleep(10)
                 mea2 = bittrex.calculate_mea(21, 'hour')
                 latest_summary = bittrex.get_latest_summary()
+                track_btc_balance(market, bittrex)
                 ask = latest_summary['Ask']
                 if ask < mea * 1.015:
                             #If we get in here, I want to see what market
@@ -205,6 +214,7 @@ def thread_work(market):
                 time.sleep(10)
                 mea2 = bittrex.calculate_mea(21, 'hour')
                 balance = bittrex.get_balance()
+                track_btc_balance(market, bittrex)
                 latest_summary = bittrex.get_latest_summary()
 
                 """
@@ -222,7 +232,7 @@ def thread_work(market):
                 I was going to add some conditions to make sure we are in profit range, but im going to just
                 see how selling no matter what, when the ticker rolls over from a pump
                 """
-                if (ticker_data[0]['C'] / ticker_data[0]['O']) > 1.1: # if the pump in the last hour was greater than a 10 percent rise, get out straight away
+                if (ticker_data[0]['C'] / ticker_data[0]['O']) > 1.10: # if the pump in the last hour was greater than a 15 percent rise, get out straight away
                     bid = latest_summary['Bid']
                     bittrex.place_sell_order(bid)
                     current_state = "InitTrendingUp"
@@ -231,7 +241,7 @@ def thread_work(market):
                 This is our stop loss logic
                 """
                 if current_state == "TrendingUp":
-                    if latest_summary['Last'] <= (current_purchase * 0.95): #If down 5% then sell
+                    if latest_summary['Last'] <= (current_purchase * 0.9): #If down 10% then sell
                         bid = latest_summary['Last']
                         bittrex.place_sell_order(bid)
                         if mea > mea2:
@@ -239,20 +249,32 @@ def thread_work(market):
                         else:
                             current_state = "StoppedLoss"# as long as state is not InitTrendingUp hunter will buy again at the right time
 
+                #seperate rules for these coins
+                good_coins = ["BTC-LTC", "BTC-ETH", "BTC-DASH", "BTC-NEO", "BTC-XRP", "BTC-ZEC"]
                 """
-                If we make a 10 percent gain then sell
+                If we make a 30 percent gain then sell
                 """
-                if current_state == "TrendingUp":
+                if current_state == "TrendingUp" and market in good_coins:
+                    if latest_summary['Bid'] > (current_purchase * 1.30):
+                        bid = latest_summary['Bid']
+                        bittrex.place_sell_order(bid)
+                        current_state = "InitTrendingUp"
+                """
+                Sell shit coins for 10 percent gains
+                """
+                if current_state == "TrendingUp" and market not in good_coins:
                     if latest_summary['Bid'] > (current_purchase * 1.10):
                         bid = latest_summary['Bid']
                         bittrex.place_sell_order(bid)
                         current_state = "InitTrendingUp"
 
+
+
                 """
                 This is useful for when the hunter doesn't have previous buys loaded into memory for stop loss prevention,
                 the calculation is based on the BTC_PER_PURCHASE global variable value
                 """
-                if balance > 0 and (latest_summary['Last'] * balance) <= (0.00100 * 0.95):
+                if balance > 0 and (latest_summary['Last'] * balance) <= (BTC_PER_PURCHASE * 0.9):
                         bid = latest_summary['Last']
                         bittrex.place_sell_order(bid)
                         current_state = "InitTrendingUp" #this will stop hunter buying the same thing and losing possibly multiple times

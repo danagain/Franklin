@@ -31,6 +31,19 @@ class Bittrex:
         current_balance = result_return['Balance']
         return current_balance
 
+    def get_btc_balance(self):
+        """
+        Get the current bitcoin balance of the account
+        """
+        coin_dict = {"Coin":"BTC"}
+        balance_return = self.apicall.http_request('Balance', coin_dict, 'Get')
+        while type(balance_return) is not dict:
+            balance_return = self.apicall.http_request('Balance', coin_dict, 'Get')
+            time.sleep(30)
+        result_return = balance_return['result']
+        current_balance = result_return['Balance']
+        return current_balance
+
     def get_latest_summary(self):
         #wrapping the market in a dict for the http func
         market = {'Coin': self.market}
