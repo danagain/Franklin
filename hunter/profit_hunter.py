@@ -15,7 +15,6 @@ from bittrex import Bittrex
 from apicall import ApiCall
 
 BTC_PER_PURCHASE = 0.00150000
-BTC_BALANCE = 0
 # For talking with Splunk Container
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -106,11 +105,9 @@ def send_event(splunk_host, auth_token, log_data):
 
    return post_success
 
-def track_btc_balance(market, bittrex):
-    if market == "BTC-ETH":
-        balance = bittrex.get_btc_balance()
-        global BTC_BALANCE
-        BTC_BALANCE = balance
+def track_btc_balance(bittrex):
+    balance = bittrex.get_btc_balance()
+    return balance
 
 def thread_work(market):
     """
@@ -126,7 +123,6 @@ def thread_work(market):
     print("ema 21  ", market, " ", mea2 )
     current_purchase = 99999999999
     balance = bittrex.get_balance()
-    track_btc_balance(market, bittrex)
     print("BTC BALANCE: ", BTC_BALANCE)
     current_state = ""
     counter = 0
@@ -144,7 +140,6 @@ def thread_work(market):
             init_ticker = mea
         counter = 1
         balance = bittrex.get_balance()
-        track_btc_balance(market, bittrex)
         print("balance for marekt: ", market, "is: ", balance)
         latest_summary = bittrex.get_latest_summary()
         last_closing_price = bittrex.last_closing(1, 'hour')
@@ -158,11 +153,13 @@ def thread_work(market):
                 """
                 While we are in between these thresholds we only want to buy at a reasonable ask price
                 """
+                btc_balance = track_btc_balance(bittrex) #check btc balance
+                if btc_balance < 1.0025 * BTC_PER_PURCHASE:#if we dont have enough then dont try and buy 
+                    break
                 mea = bittrex.calculate_mea(10, 'hour')
                 time.sleep(10)
                 mea2 = bittrex.calculate_mea(21, 'hour')
                 latest_summary = bittrex.get_latest_summary()
-                track_btc_balance(market, bittrex)
                 ask = latest_summary['Ask']
                 if ask < mea * 1.015:
                         #If we get in here, I want to see what market
@@ -187,7 +184,6 @@ def thread_work(market):
                 time.sleep(10)
                 mea2 = bittrex.calculate_mea(21, 'hour')
                 latest_summary = bittrex.get_latest_summary()
-                track_btc_balance(market, bittrex)
                 ask = latest_summary['Ask']
                 if ask < mea * 1.015:
                             #If we get in here, I want to see what market
@@ -214,7 +210,6 @@ def thread_work(market):
                 time.sleep(10)
                 mea2 = bittrex.calculate_mea(21, 'hour')
                 balance = bittrex.get_balance()
-                track_btc_balance(market, bittrex)
                 latest_summary = bittrex.get_latest_summary()
 
                 """

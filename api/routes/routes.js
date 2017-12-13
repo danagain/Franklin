@@ -196,6 +196,16 @@ const routes = () => {
           });
           res.status(500).json(err.message);
         } else {
+          loggingController.log({
+            message: {
+              info: data,
+              headers: req.headers,
+              body: req.body,
+              method: req.method,
+              route: req.route.path
+            },
+            severity: "info"
+          });
           res.json(data);
         }
       },
