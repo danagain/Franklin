@@ -123,7 +123,6 @@ def thread_work(market):
     print("ema 21  ", market, " ", mea2 )
     current_purchase = 99999999999
     balance = bittrex.get_balance()
-    print("BTC BALANCE: ", BTC_BALANCE)
     current_state = ""
     counter = 0
     init_ticker = 0
@@ -154,7 +153,7 @@ def thread_work(market):
                 While we are in between these thresholds we only want to buy at a reasonable ask price
                 """
                 btc_balance = track_btc_balance(bittrex) #check btc balance
-                if btc_balance < 1.0025 * BTC_PER_PURCHASE:#if we dont have enough then dont try and buy 
+                if btc_balance < 1.0025 * BTC_PER_PURCHASE:#if we dont have enough then dont try and buy
                     break
                 mea = bittrex.calculate_mea(10, 'hour')
                 time.sleep(10)
