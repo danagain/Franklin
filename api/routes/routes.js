@@ -31,7 +31,8 @@ const routes = () => {
           });
           res.status(500).json(err.message);
         } else {
-          emailer.email(data, () => {
+          emailer.email(data, (emailInfo) => {
+            console.log(emailInfo)
             res.json(data);
           });
         }
