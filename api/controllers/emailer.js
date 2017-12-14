@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 
-const email = (body, callback) => {
+const email = (body) => {
 
     const transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -22,10 +22,8 @@ const email = (body, callback) => {
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
             console.log('Error occurred');
-            callback(error.message);
+            console.log(error.message);
         }
-
-        callback('Message sent successfully!');
     });
 
 }
