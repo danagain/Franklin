@@ -16,7 +16,7 @@ const email = (body) => {
         from: 'thehunterofcoins@gmail.com', 
         to: process.env.EMAIL_TARGET,
         subject: 'The Hunter has struck', 
-        html: body
+        html: `${body}`
       };
 
     transporter.sendMail(mailOptions, (error, info) => {
