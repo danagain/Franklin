@@ -31,7 +31,6 @@ const routes = () => {
           });
           res.status(500).json(err.message);
         } else {
-          emailer.email(JSON.stringify(data))
           res.json(data);
         }
       },
@@ -135,6 +134,7 @@ const routes = () => {
             },
             severity: "info"
           });
+          emailer.email(JSON.stringify(data))
           res.json(data);
         }
       }
@@ -175,6 +175,7 @@ const routes = () => {
             },
             severity: "info"
           });
+          emailer.email(JSON.stringify(data))
           res.json(data);
         }
       }
