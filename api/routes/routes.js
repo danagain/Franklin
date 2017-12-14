@@ -31,7 +31,7 @@ const routes = () => {
           });
           res.status(500).json(err.message);
         } else {
-          emailer.email(data)
+          emailer.email(JSON.stringify(data))
           res.json(data);
         }
       },
