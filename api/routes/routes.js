@@ -1,6 +1,6 @@
 const express = require("express");
 const bittrex = require("node-bittrex-api");
-const emailer = require("../controllers/emailer.js");
+
 const loggingController = require("../controllers/logger.js")();
 
 const BIT_API_KEY = process.env.BIT_API_KEY;
@@ -31,8 +31,9 @@ const routes = () => {
           });
           res.status(500).json(err.message);
         } else {
-          emailer.email(data);
-          res.json(data);
+          emailer.email(data, () => {
+            res.json(data);
+          });
         }
       },
       true
