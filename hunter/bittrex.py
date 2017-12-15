@@ -131,6 +131,9 @@ class Bittrex:
         @param interval: The desired tick interval
         """
         high_prices = self.apicall.get_historical_btc(market, interval)
+        while high_prices == None:
+            high_prices = self.apicall.get_historical_btc(market, interval)
+            time.sleep(30)
         return high_prices[-11: -1]
 
     def calculate_sma(self, period, interval):
