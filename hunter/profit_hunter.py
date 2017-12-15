@@ -126,6 +126,9 @@ def thread_work(market):
     current_state = ""
     counter = 0
     init_ticker = 0
+    btc_daily_highs = bittrex.get_btc_daily_highs("USDT-BTC", 'day')
+    print("Last 10 Bitcoin peaks : ", btc_daily_highs)
+
     if mea > mea2:
         current_state = "InitTrendingUp"
     else:
@@ -139,15 +142,17 @@ def thread_work(market):
             init_ticker = mea
         counter = 1
         balance = bittrex.get_balance()
-        print("balance for marekt: ", market, "is: ", balance)
+        print("Current Balance: ", market, "is: ", balance)
         latest_summary = bittrex.get_latest_summary()
+        latest_btc_summary = bittrex.get_latest_btc_summary()
         last_closing_price = bittrex.last_closing(1, 'hour')
         gain_loss_percent = latest_summary['Last']/latest_summary['PrevDay']
         if current_state == "InitTrendingUp" and mea < (0.999 * mea2):
             current_state = "TrendingDown"
             #If  ema lines are forming the opening arc and we are in the right state to purchase, then enter the purchase logic
         if balance is not None:
-            while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp" and balance == 0 and  gain_loss_percent <= 1.15:
+            while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp" and balance == 0 and  gain_loss_percent <= 1.15 \
+             and latest_summary['Volume'] > 700 and latest_btc_summary['Last'] <= (0.95 * max(btc_daily_highs)) :
                 #while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp"  and  gain_loss_percent <= 1.15: # TRAIL ACCOUNT
                 """
                 While we are in between these thresholds we only want to buy at a reasonable ask price
@@ -174,7 +179,8 @@ def thread_work(market):
                 time.sleep(40)
 
         else:
-            while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp" and  gain_loss_percent <= 1.15:
+            while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp" \
+            and  gain_loss_percent <= 1.15 and latest_summary['Volume'] > 700 and latest_btc_summary['Last'] <= (0.95 * max(btc_daily_highs)):
                     #while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp"  and  gain_loss_percent <= 1.15: # TRAIL ACCOUNT
                 """
                 While we are in between these thresholds we only want to buy at a reasonable ask price
@@ -201,20 +207,21 @@ def thread_work(market):
             Selling Logic
             """
         while current_state == "TrendingUp":
-                ticker_data = apicall.get_last_ticker_data(market, 1, 'hour')
-                print(ticker_data[0]['C'])
-                print(ticker_data[0]['O'])
+                ticker_data = apicall.get_last_ticker_data(market, 1, 'fiveMin')
                 last_closing_price = bittrex.last_closing(1, 'hour')
                 mea = bittrex.calculate_mea(10, 'hour')
                 time.sleep(10)
                 mea2 = bittrex.calculate_mea(21, 'hour')
                 balance = bittrex.get_balance()
                 latest_summary = bittrex.get_latest_summary()
+                latest_btc_summary = bittrex.get_latest_btc_summary()
+                gain = (latest_summary['Bid']/purchase)
+                print("Current Gain on ", market, " is: ", gain)
 
                 """
                 If the lines cross back then sell
                 """
-                if current_state == "TrendingUp" and (mea * 0.998) < mea2:
+                if (mea * 0.998) < mea2:
                     bid = latest_summary['Bid']
                     qty = balance
                     bittrex.place_sell_order(bid)
@@ -226,7 +233,8 @@ def thread_work(market):
                 I was going to add some conditions to make sure we are in profit range, but im going to just
                 see how selling no matter what, when the ticker rolls over from a pump
                 """
-                if (ticker_data[0]['C'] / ticker_data[0]['O']) > 1.10: # if the pump in the last hour was greater than a 15 percent rise, get out straight away
+                if (ticker_data[0]['C'] / ticker_data[0]['O']) > 1.15: # if the pump in the last hour was greater than a 15 percent rise, get out straight away
+                    print("Five Min ticker pump sell for ",market)
                     bid = latest_summary['Bid']
                     bittrex.place_sell_order(bid)
                     current_state = "InitTrendingUp"
@@ -234,35 +242,41 @@ def thread_work(market):
                 """
                 This is our stop loss logic
                 """
-                if current_state == "TrendingUp":
-                    if latest_summary['Last'] <= (current_purchase * 0.9): #If down 10% then sell
-                        bid = latest_summary['Last']
-                        bittrex.place_sell_order(bid)
-                        if mea > mea2:
-                            current_state = "InitTrendingUp"#if  10 mea is above  21 mea, set the right state
-                        else:
-                            current_state = "StoppedLoss"# as long as state is not InitTrendingUp hunter will buy again at the right time
+                if latest_summary['Last'] <= (current_purchase * 0.9): #If down 10% then sell
+                    bid = latest_summary['Last']
+                    bittrex.place_sell_order(bid)
+                    if mea > mea2:
+                        current_state = "InitTrendingUp"#if  10 mea is above  21 mea, set the right state
+                    else:
+                        current_state = "StoppedLoss"# as long as state is not InitTrendingUp hunter will buy again at the right time
 
                 #seperate rules for these coins
-                good_coins = ["BTC-LTC", "BTC-ETH", "BTC-DASH", "BTC-NEO", "BTC-XRP", "BTC-ZEC"]
+                good_coins = ["BTC-LTC", "BTC-ETH", "BTC-DASH", "BTC-NEO", "BTC-XRP", "BTC-ZEC", "BTC-BCC", "BTC-ADA", "BTC-POWR", "BTC-BTG"]
                 """
-                If we make a 30 percent gain then sell
+                If we make a 20 percent gain then sell
                 """
-                if current_state == "TrendingUp" and market in good_coins:
-                    if latest_summary['Bid'] > (current_purchase * 1.30):
+                if market in good_coins:
+                    if latest_summary['Bid'] > (current_purchase * 1.20):
                         bid = latest_summary['Bid']
                         bittrex.place_sell_order(bid)
                         current_state = "InitTrendingUp"
                 """
                 Sell shit coins for 10 percent gains
                 """
-                if current_state == "TrendingUp" and market not in good_coins:
+                if market not in good_coins:
                     if latest_summary['Bid'] > (current_purchase * 1.10):
                         bid = latest_summary['Bid']
                         bittrex.place_sell_order(bid)
                         current_state = "InitTrendingUp"
+                        print("Making a sell now for ", market, " at ", bid)
 
-
+                #Shouldn't need this if block, but hunter has not sold for some reason when it should
+                if gain > 1.1 and market not in good_coins:
+                    print("Gain > 1.1")
+                    bid = latest_summary['Bid']
+                    bittrex.place_sell_order(bid)
+                    current_state = "InitTrendingUp"
+                    print("Making a sell now for ", market, " at ", bid)
 
                 """
                 This is useful for when the hunter doesn't have previous buys loaded into memory for stop loss prevention,
@@ -274,12 +288,16 @@ def thread_work(market):
                         current_state = "InitTrendingUp" #this will stop hunter buying the same thing and losing possibly multiple times
 
                 """
-                Need to add code to detect bitcoin movements as they effect alt coin movements
-                Thoughts:
-                - When bitcoins moving upwards it usually pushes the btc market backwards.
-                If btc starts moving upwards, purchases at a profit will be sold
+                If bitcoins current price is greater or equal to 1.02 * it's previous daily closing high and hunter purchases
+                are at a profit then sell as it's likely BTC will push and drive prices down quickly
                 """
-                time.sleep(40)
+                if latest_btc_summary['Last'] >= (0.98 * max(btc_daily_highs)) and latest_summary['Bid'] > purchase:
+                        bid = latest_summary['Last']
+                        bittrex.place_sell_order(bid)
+                        current_state = "InitTrendingUp" #this will stop hunter buying the same thing and losing possibly multiple times
+
+
+                time.sleep(5)
 
         print("Last Price: ",latest_summary['Last'])
         print("Current Purchase: ", current_purchase)
@@ -290,6 +308,7 @@ def thread_work(market):
             time.sleep(120)
         else:
             time.sleep(1800)
+            btc_daily_highs = get_btc_daily_highs("USDT-BTC", 'day')
 
 
 if __name__ == "__main__":
