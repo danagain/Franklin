@@ -288,8 +288,9 @@ def thread_work(market):
                         current_state = "InitTrendingUp" #this will stop hunter buying the same thing and losing possibly multiple times
 
                 """
-                If bitcoins current price is greater or equal to 1.02 * it's previous daily closing high and hunter purchases
-                are at a profit then sell as it's likely BTC will push and drive prices down quickly
+                If bitcoins current price is greater or equal to 98 percent of it's previous daily closing high and hunter purchases
+                are at a profit then sell as it's likely BTC will push and drive prices down really quickly. This percentage value 
+                is experimental and might have to be tweaked.
                 """
                 if latest_btc_summary['Last'] >= (0.98 * max(btc_daily_highs)) and latest_summary['Bid'] > purchase:
                         bid = latest_summary['Last']
