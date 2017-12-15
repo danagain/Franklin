@@ -135,6 +135,7 @@ def thread_work(market):
         current_state = "TrendingDown"
 
     while True:
+        btc_daily_highs = bittrex.get_btc_daily_highs("USDT-BTC", 'day')
         mea = bittrex.calculate_mea(10, 'hour')
         time.sleep(10)
         mea2 = bittrex.calculate_mea(21, 'hour')
