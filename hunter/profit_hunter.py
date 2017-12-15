@@ -113,6 +113,16 @@ def thread_work(market):
     """
     Designated area for threads to buy and sell
     """
+    def btc_mea(bittrex):
+        mea = bittrex.calculate_mea(10, 'fifteenMinBtc')
+        time.sleep(5)
+        mea2 = bittrex.calculate_mea(21, 'fifteenMinBtc')
+        #print("btc mea 10 ", mea)
+        #print("btc mea 21 ", mea2)
+        if mea2 > 1.001 * mea:
+            #print("returning true")
+            return True
+        return False
     bittrex = Bittrex(market)#make an instance of the bittrex class which takes market as a constructor arg
     apicall = ApiCall()
     time.sleep(10)
@@ -146,15 +156,16 @@ def thread_work(market):
         latest_summary = bittrex.get_latest_summary()
         latest_btc_summary = bittrex.get_latest_btc_summary()
         btc_daily_highs.append(latest_btc_summary['High']) #check if the new ATH is currently happening, add to list
-        print("Last 10 Bitcoin peaks and current high: ", btc_daily_highs)
+        #print("Last 10 Bitcoin peaks and current high: ", btc_daily_highs)
         last_closing_price = bittrex.last_closing(1, 'hour')
         gain_loss_percent = latest_summary['Last']/latest_summary['PrevDay']
         if current_state == "InitTrendingUp" and mea < (0.999 * mea2):
             current_state = "TrendingDown"
             #If  ema lines are forming the opening arc and we are in the right state to purchase, then enter the purchase logic
+        btc_mea(bittrex)
         if balance is not None:
             while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp" and balance == 0 and  gain_loss_percent <= 1.15 \
-             and latest_summary['Volume'] > 700 and latest_btc_summary['Last'] <= (0.95 * max(btc_daily_highs)) :
+             and latest_summary['Volume'] > 700 and ((latest_btc_summary['Last'] <= (0.96 * max(btc_daily_highs))) or btc_mea(bittrex)):
                 #while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp"  and  gain_loss_percent <= 1.15: # TRAIL ACCOUNT
                 """
                 While we are in between these thresholds we only want to buy at a reasonable ask price
@@ -293,7 +304,7 @@ def thread_work(market):
                 If bitcoins current price is greater or equal to 1.02 * it's previous daily closing high and hunter purchases
                 are at a profit then sell as it's likely BTC will push and drive prices down quickly
                 """
-                if latest_btc_summary['Last'] >= (0.98 * max(btc_daily_highs)) and latest_summary['Bid'] > purchase:
+                if latest_btc_summary['Last'] >= (0.995 * max(btc_daily_highs)) and latest_summary['Bid'] > purchase:
                         bid = latest_summary['Last']
                         bittrex.place_sell_order(bid)
                         current_state = "InitTrendingUp" #this will stop hunter buying the same thing and losing possibly multiple times
