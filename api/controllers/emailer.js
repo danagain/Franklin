@@ -15,8 +15,8 @@ const email = (body) => {
     const mailOptions = {
         from: 'thehunterofcoins@gmail.com', 
         to: process.env.EMAIL_TARGET,
-        subject: 'The Hunter has struck', 
-        html: `${body}`
+        subject: `${body.BuyOrSell} - ${body.MarketName} - Hunted`, 
+        html: `The ${body.BuyOrSell} for ${body.MarketName} at ${body.Quantity} was a ${body.success}`
       };
 
     transporter.sendMail(mailOptions, (error, info) => {
