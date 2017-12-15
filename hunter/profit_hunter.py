@@ -126,8 +126,7 @@ def thread_work(market):
     current_state = ""
     counter = 0
     init_ticker = 0
-    btc_daily_highs = bittrex.get_btc_daily_highs("USDT-BTC", 'day')
-    print("Last 10 Bitcoin peaks : ", btc_daily_highs)
+
 
     if mea > mea2:
         current_state = "InitTrendingUp"
@@ -146,6 +145,8 @@ def thread_work(market):
         print("Current Balance: ", market, "is: ", balance)
         latest_summary = bittrex.get_latest_summary()
         latest_btc_summary = bittrex.get_latest_btc_summary()
+        btc_daily_highs.append(latest_btc_summary['High']) #check if the new ATH is currently happening, add to list
+        print("Last 10 Bitcoin peaks and current high: ", btc_daily_highs)
         last_closing_price = bittrex.last_closing(1, 'hour')
         gain_loss_percent = latest_summary['Last']/latest_summary['PrevDay']
         if current_state == "InitTrendingUp" and mea < (0.999 * mea2):
