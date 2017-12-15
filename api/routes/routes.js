@@ -134,7 +134,7 @@ const routes = () => {
             },
             severity: "info"
           });
-          emailer.email(JSON.stringify(data))
+          emailer.email(data)
           res.json(data);
         }
       }
@@ -175,7 +175,7 @@ const routes = () => {
             },
             severity: "info"
           });
-          emailer.email(JSON.stringify(data))
+          emailer.email(data)
           res.json(data);
         }
       }
