@@ -309,7 +309,7 @@ def thread_work(market):
             time.sleep(120)
         else:
             time.sleep(1800)
-            btc_daily_highs = get_btc_daily_highs("USDT-BTC", 'day')
+            btc_daily_highs = bittrex.get_btc_daily_highs("USDT-BTC", 'day')
 
 
 if __name__ == "__main__":
