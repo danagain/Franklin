@@ -42,6 +42,7 @@ const routes = () => {
     const markets = [
       {
         markets: [
+          "USDT-BTC",
           "BTC-ETH",
           "BTC-BCC",
           "BTC-BTG",

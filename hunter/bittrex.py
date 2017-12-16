@@ -51,15 +51,7 @@ class Bittrex:
         while summary == None or isinstance(summary, dict) == False :
             summary = self.apicall.http_request("summary", market, 'Get')
             time.sleep(30)
-        return summary['result'][0]
 
-    def get_latest_btc_summary(self):
-        #wrapping the market in a dict for the http func
-        market = {'Coin': "USDT-BTC"}
-        summary = self.apicall.http_request("summary", market, 'Get')
-        while summary == None or isinstance(summary, dict) == False :
-            summary = self.apicall.http_request("summary", market, 'Get')
-            time.sleep(30)
         return summary['result'][0]
 
     def place_buy_order(self, qty, price):
@@ -119,22 +111,11 @@ class Bittrex:
         while get_uuid == None or isinstance(get_uuid, dict) == False:
             get_uuid = self.apicall.http_request('orders', market_dict, 'Get')
             time.sleep(30)
+
+
         result_return = get_uuid['result'] #get the uuid from the returned request
         uuid = {'Coin':result_return[0]['OrderUuid']} #store into a dictionary
         self.apicall.http_request('cancel', uuid, 'Get') #call api again
-
-    def get_btc_daily_highs(self, market, interval):
-        """
-        Fetch and return the last 10 days of closing prices so hunter can be wary
-        of BTC all time high purchases
-        @param period: The period of time for which the mea will be calculated over
-        @param interval: The desired tick interval
-        """
-        high_prices = self.apicall.get_historical_btc(market, interval)
-        while high_prices == None:
-            high_prices = self.apicall.get_historical_btc(market, interval)
-            time.sleep(30)
-        return high_prices[-11: -1]
 
     def calculate_sma(self, period, interval):
         """
@@ -153,18 +134,10 @@ class Bittrex:
         @param period: The period of time for which the mea will be calculated over
         @param interval: The desired tick interval
         """
-        if interval == 'fifteenMinBtc':
-            last_closing_price = self.apicall.get_historical("USDT-BTC", period, 'fiveMin')
-            while last_closing_price == None:
-                last_closing_price = self.apicall.get_historical("USDT-BTC", period, 'fiveMin')
-                time.sleep(30)
-            interval = 'fifteenMin'
-        else:
+        last_closing_price = self.apicall.get_historical(self.market, period, interval)
+        while last_closing_price == None:
             last_closing_price = self.apicall.get_historical(self.market, period, interval)
-            while last_closing_price == None:
-                last_closing_price = self.apicall.get_historical(self.market, period, interval)
-                time.sleep(30)
-
+            time.sleep(30)
 
         #seed = self.calculate_sma(period, interval)
         #EMA [today] = (Price [today] x K) + (EMA [yesterday] x (1 – K))
@@ -177,21 +150,21 @@ class Bittrex:
         N = period
         #Seeding the first EMA to the closing price 10 days ago
         #EMA_yesterday = last_closing_price[0]
-        if interval == 'fifteenMin':
-            EMA_yesterday = last_closing_price[0]
-            counter = 0
-            for i in range(len(last_closing_price)-1):
-                if counter % 3 == 0:
-                    EMA_today = (last_closing_price[i + 1] * K) + (EMA_yesterday * (1 - K))
-                    EMA_yesterday = EMA_today
-                counter += 1
-            return EMA_today
-        else:
-            EMA_yesterday = last_closing_price[0]
-            for i in range(len(last_closing_price)-1):
+        """
+        #This comment section can be used for 15min ticks if needed
+        EMA_yesterday = last_closing_price[0]
+        counter = 0
+        for i in range(len(last_closing_price)-1):
+            if counter % 3 == 0:
                 EMA_today = (last_closing_price[i + 1] * K) + (EMA_yesterday * (1 - K))
                 EMA_yesterday = EMA_today
-            return EMA_today
+            counter += 1
+            """
+        EMA_yesterday = last_closing_price[0]
+        for i in range(len(last_closing_price)-1):
+            EMA_today = (last_closing_price[i + 1] * K) + (EMA_yesterday * (1 - K))
+            EMA_yesterday = EMA_today
+        return EMA_today
 
 
     def last_closing(self, period, interval):
