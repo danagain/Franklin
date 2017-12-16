@@ -165,7 +165,7 @@ def thread_work(market):
         btc_mea(bittrex)
         if balance is not None:
             while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp" and balance == 0 and  gain_loss_percent <= 1.15 \
-             and latest_summary['Volume'] > 700 and ((latest_btc_summary['Last'] <= (0.96 * max(btc_daily_highs))) or btc_mea(bittrex)):
+             and latest_summary['Volume'] > 600:
                 #while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp"  and  gain_loss_percent <= 1.15: # TRAIL ACCOUNT
                 """
                 While we are in between these thresholds we only want to buy at a reasonable ask price
@@ -193,7 +193,7 @@ def thread_work(market):
 
         else:
             while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp" \
-            and  gain_loss_percent <= 1.15 and latest_summary['Volume'] > 700 and latest_btc_summary['Last'] <= (0.95 * max(btc_daily_highs)):
+            and  gain_loss_percent <= 1.15 and latest_summary['Volume'] > 600:
                     #while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp"  and  gain_loss_percent <= 1.15: # TRAIL ACCOUNT
                 """
                 While we are in between these thresholds we only want to buy at a reasonable ask price
@@ -228,7 +228,7 @@ def thread_work(market):
                 balance = bittrex.get_balance()
                 latest_summary = bittrex.get_latest_summary()
                 latest_btc_summary = bittrex.get_latest_btc_summary()
-                gain = (latest_summary['Bid']/purchase)
+                gain = (latest_summary['Bid']/current_purchase)
                 print("Current Gain on ", market, " is: ", gain)
 
                 """
@@ -304,11 +304,10 @@ def thread_work(market):
                 If bitcoins current price is greater or equal to 1.02 * it's previous daily closing high and hunter purchases
                 are at a profit then sell as it's likely BTC will push and drive prices down quickly
                 """
-                if latest_btc_summary['Last'] >= (0.995 * max(btc_daily_highs)) and latest_summary['Bid'] > purchase:
+                if latest_btc_summary['Last'] >= (0.995 * max(btc_daily_highs)) and latest_summary['Bid'] > current_purchase:
                         bid = latest_summary['Last']
                         bittrex.place_sell_order(bid)
                         current_state = "InitTrendingUp" #this will stop hunter buying the same thing and losing possibly multiple times
-
 
                 time.sleep(5)
 
