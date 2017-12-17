@@ -115,6 +115,7 @@ def thread_work(market, num):
     """
     Designated area for threads to buy and sell
     """
+    global CURRENT_HOUR
     time.sleep(num)
     bittrex = Bittrex(market)#make an instance of the bittrex class which takes market as a constructor arg
     apicall = ApiCall()
@@ -145,7 +146,7 @@ def thread_work(market, num):
             hour_min_sec = day_and_time_str[1].split(":")
             global CURRENT_HOUR
             CURRENT_HOUR = hour_min_sec[0]
-        print("Current Hour is ", hr, " Performing a hunt")
+        print("Current Hour is ", CURRENT_HOUR, " Performing a hunt")
         last_closing_price = bittrex.last_closing(1, 'hour')
         gain_loss_percent = latest_summary['Last']/latest_summary['PrevDay']
         if current_state == "InitTrendingUp" and mea < (0.999 * mea2):
@@ -298,10 +299,9 @@ def thread_work(market, num):
                     #Getting the current bttrex time
                     day_and_time_str = latest_summary['TimeStamp'].split("T")
                     hour_min_sec = day_and_time_str[1].split(":")
-                    global CURRENT_HOUR
                     CURRENT_HOUR = hour_min_sec[0]
                     time.sleep(10)
-                else:
+            else:
                     time.sleep(10)
 
 
