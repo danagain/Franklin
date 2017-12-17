@@ -14,7 +14,8 @@ import ssl
 from bittrex import Bittrex
 from apicall import ApiCall
 
-BTC_PER_PURCHASE = 0.00150000
+BTC_PER_PURCHASE = 0.00100000
+CURRENT_HOUR = 0
 # For talking with Splunk Container
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -139,9 +140,11 @@ def thread_work(market, num):
         time.sleep(1)
         mea2 = bittrex.calculate_mea(21, 'hour')
         #Getting the current bttrex time
-        day_and_time_str = latest_summary['TimeStamp'].split("T")
-        hour_min_sec = day_and_time_str[1].split(":")
-        hr = hour_min_sec[0]
+        if market == "BTC-ETH":
+            day_and_time_str = latest_summary['TimeStamp'].split("T")
+            hour_min_sec = day_and_time_str[1].split(":")
+            global CURRENT_HOUR
+            CURRENT_HOUR = hour_min_sec[0]
         print("Current Hour is ", hr, " Performing a hunt")
         last_closing_price = bittrex.last_closing(1, 'hour')
         gain_loss_percent = latest_summary['Last']/latest_summary['PrevDay']
@@ -267,10 +270,12 @@ def thread_work(market, num):
                 This is useful for when the hunter doesn't have previous buys loaded into memory for stop loss prevention,
                 the calculation is based on the BTC_PER_PURCHASE global variable value
                 """
+                """
                 if balance > 0 and (latest_summary['Last'] * balance) <= (BTC_PER_PURCHASE * 0.8):
                         bid = latest_summary['Last']
                         bittrex.place_sell_order(bid)
                         current_state = "InitTrendingUp" #this will stop hunter buying the same thing and losing possibly multiple times
+                        """
 
                 """
                 Need to add code to detect bitcoin movements as they effect alt coin movements
@@ -285,14 +290,18 @@ def thread_work(market, num):
         print("ema 10  ", market, " ", mea )
         print("ema 21  ", market, " ", mea2 )
         print("Current state:", current_state, "\n" )
-        hunter_time = hr #assign a variable time to the current hour that the hunter has in memory
+        hunter_time = CURRENT_HOUR #assign a variable time to the current hour that the hunter has in memory
         #keep checking time until the change of hour breaks the while loop
-        while hr == hunter_time:
+        while CURRENT_HOUR == hunter_time:
+            if market == "BTC-ETH":
                     latest_summary = bittrex.get_latest_summary()
                     #Getting the current bttrex time
                     day_and_time_str = latest_summary['TimeStamp'].split("T")
                     hour_min_sec = day_and_time_str[1].split(":")
-                    hr = hour_min_sec[0]
+                    global CURRENT_HOUR
+                    CURRENT_HOUR = hour_min_sec[0]
+                    time.sleep(10)
+                else:
                     time.sleep(10)
 
 
