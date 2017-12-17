@@ -24,7 +24,7 @@ class MyThread(threading.Thread):
     """
     Class to handle all of the threading aspect
     """
-    def __init__(self, market):
+    def __init__(self, market, num):
         """
         Class constructor for initialisation
         @param market: The market/stock this thread is
@@ -32,13 +32,14 @@ class MyThread(threading.Thread):
         """
         threading.Thread.__init__(self)
         self.market = market
+        self.num = num
 
     def run(self):
         """
         Custom Override of the Thread Librarys run function to start the
         thread work function
         """
-        thread_work(self.market)
+        thread_work(self.market, self.num)
 
 
 def send_event(splunk_host, auth_token, log_data):
@@ -109,16 +110,16 @@ def track_btc_balance(bittrex):
     balance = bittrex.get_btc_balance()
     return balance
 
-def thread_work(market):
+def thread_work(market, num):
     """
     Designated area for threads to buy and sell
     """
-    print("Loading Initial States")
+    time.sleep(num)
     bittrex = Bittrex(market)#make an instance of the bittrex class which takes market as a constructor arg
     apicall = ApiCall()
-    time.sleep(2)
+    time.sleep(1)
     mea = bittrex.calculate_mea(10, 'hour')#"oneMin", "fiveMin", "thirtyMin", "hour" and "day"
-    time.sleep(2)
+    time.sleep(1)
     mea2 = bittrex.calculate_mea(21, 'hour')
     print("ema 10  ", market, " ", mea )
     print("ema 21  ", market, " ", mea2 )
@@ -131,13 +132,12 @@ def thread_work(market):
         current_state = "TrendingDown"
     time.sleep(60)
     while True:
-        mea = bittrex.calculate_mea(10, 'hour')
-        time.sleep(2)
-        mea2 = bittrex.calculate_mea(21, 'hour')
-        time.sleep(10)
+        time.sleep(num)
         balance = bittrex.get_balance()
-        print("balance for marekt: ", market, "is: ", balance)
         latest_summary = bittrex.get_latest_summary()
+        mea = bittrex.calculate_mea(10, 'hour')
+        time.sleep(1)
+        mea2 = bittrex.calculate_mea(21, 'hour')
         #Getting the current bttrex time
         day_and_time_str = latest_summary['TimeStamp'].split("T")
         hour_min_sec = day_and_time_str[1].split(":")
@@ -158,7 +158,7 @@ def thread_work(market):
                 if btc_balance < 1.0025 * BTC_PER_PURCHASE:#if we dont have enough then dont try and buy
                     break
                 mea = bittrex.calculate_mea(10, 'hour')
-                time.sleep(2)
+                time.sleep(1)
                 mea2 = bittrex.calculate_mea(21, 'hour')
                 latest_summary = bittrex.get_latest_summary()
                 ask = latest_summary['Ask']
@@ -267,7 +267,7 @@ def thread_work(market):
                 This is useful for when the hunter doesn't have previous buys loaded into memory for stop loss prevention,
                 the calculation is based on the BTC_PER_PURCHASE global variable value
                 """
-                if balance > 0 and (latest_summary['Last'] * balance) <= (BTC_PER_PURCHASE * 0.9):
+                if balance > 0 and (latest_summary['Last'] * balance) <= (BTC_PER_PURCHASE * 0.8):
                         bid = latest_summary['Last']
                         bittrex.place_sell_order(bid)
                         current_state = "InitTrendingUp" #this will stop hunter buying the same thing and losing possibly multiple times
@@ -304,7 +304,7 @@ if __name__ == "__main__":
     markets = apicall.get_markets() # Get all of the markets from the WEB-API
     THREADS = []
     for c in range(0, len(markets)):
-        t = MyThread(markets[c])
+        t = MyThread(markets[c], c)
         t.setDaemon(True)
         THREADS.append(t)
     for i in range(0, len(markets)):
