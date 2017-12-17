@@ -113,34 +113,36 @@ def thread_work(market):
     """
     Designated area for threads to buy and sell
     """
+    print("Loading Initial States")
     bittrex = Bittrex(market)#make an instance of the bittrex class which takes market as a constructor arg
     apicall = ApiCall()
-    time.sleep(10)
+    time.sleep(2)
     mea = bittrex.calculate_mea(10, 'hour')#"oneMin", "fiveMin", "thirtyMin", "hour" and "day"
-    time.sleep(10)
+    time.sleep(2)
     mea2 = bittrex.calculate_mea(21, 'hour')
     print("ema 10  ", market, " ", mea )
     print("ema 21  ", market, " ", mea2 )
     current_purchase = 99999999999
     balance = bittrex.get_balance()
     current_state = ""
-    counter = 0
-    init_ticker = 0
     if mea > mea2:
         current_state = "InitTrendingUp"
     else:
         current_state = "TrendingDown"
-
+    time.sleep(60)
     while True:
         mea = bittrex.calculate_mea(10, 'hour')
-        time.sleep(10)
+        time.sleep(2)
         mea2 = bittrex.calculate_mea(21, 'hour')
-        if counter == 0:
-            init_ticker = mea
-        counter = 1
+        time.sleep(10)
         balance = bittrex.get_balance()
         print("balance for marekt: ", market, "is: ", balance)
         latest_summary = bittrex.get_latest_summary()
+        #Getting the current bttrex time
+        day_and_time_str = latest_summary['TimeStamp'].split("T")
+        hour_min_sec = day_and_time_str[1].split(":")
+        hr = hour_min_sec[0]
+        print("Current Hour is ", hr, " Performing a hunt")
         last_closing_price = bittrex.last_closing(1, 'hour')
         gain_loss_percent = latest_summary['Last']/latest_summary['PrevDay']
         if current_state == "InitTrendingUp" and mea < (0.999 * mea2):
@@ -156,7 +158,7 @@ def thread_work(market):
                 if btc_balance < 1.0025 * BTC_PER_PURCHASE:#if we dont have enough then dont try and buy
                     break
                 mea = bittrex.calculate_mea(10, 'hour')
-                time.sleep(10)
+                time.sleep(2)
                 mea2 = bittrex.calculate_mea(21, 'hour')
                 latest_summary = bittrex.get_latest_summary()
                 ask = latest_summary['Ask']
@@ -180,7 +182,7 @@ def thread_work(market):
                 While we are in between these thresholds we only want to buy at a reasonable ask price
                 """
                 mea = bittrex.calculate_mea(10, 'hour')
-                time.sleep(10)
+                time.sleep(2)
                 mea2 = bittrex.calculate_mea(21, 'hour')
                 latest_summary = bittrex.get_latest_summary()
                 ask = latest_summary['Ask']
@@ -201,12 +203,10 @@ def thread_work(market):
             Selling Logic
             """
         while current_state == "TrendingUp":
-                ticker_data = apicall.get_last_ticker_data(market, 1, 'hour')
-                print(ticker_data[0]['C'])
-                print(ticker_data[0]['O'])
+                ticker_data = apicall.get_last_ticker_data(market, 1, 'fiveMin')
                 last_closing_price = bittrex.last_closing(1, 'hour')
                 mea = bittrex.calculate_mea(10, 'hour')
-                time.sleep(10)
+                time.sleep(2)
                 mea2 = bittrex.calculate_mea(21, 'hour')
                 balance = bittrex.get_balance()
                 latest_summary = bittrex.get_latest_summary()
@@ -285,10 +285,16 @@ def thread_work(market):
         print("ema 10  ", market, " ", mea )
         print("ema 21  ", market, " ", mea2 )
         print("Current state:", current_state, "\n" )
-        if init_ticker == mea:
-            time.sleep(60)
-        else:
-            time.sleep(1800)
+        hunter_time = hr #assign a variable time to the current hour that the hunter has in memory
+        #keep checking time until the change of hour breaks the while loop
+        while hr == hunter_time:
+                    latest_summary = bittrex.get_latest_summary()
+                    #Getting the current bttrex time
+                    day_and_time_str = latest_summary['TimeStamp'].split("T")
+                    hour_min_sec = day_and_time_str[1].split(":")
+                    hr = hour_min_sec[0]
+                    time.sleep(10)
+
 
 
 if __name__ == "__main__":
@@ -303,6 +309,6 @@ if __name__ == "__main__":
         THREADS.append(t)
     for i in range(0, len(markets)):
         THREADS[i].start()
-        time.sleep(20)
+        time.sleep(1)
     while threading.active_count() > 0:
         time.sleep(1000)
