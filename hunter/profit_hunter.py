@@ -132,9 +132,9 @@ def thread_work(market, num):
         current_state = "InitTrendingUp"
     else:
         current_state = "TrendingDown"
-    time.sleep(60)
+    time.sleep(90)
     while True:
-        time.sleep(num)
+        time.sleep(num*1.2)
         balance = bittrex.get_balance()
         latest_summary = bittrex.get_latest_summary()
         mea = bittrex.calculate_mea(10, 'hour')
@@ -264,6 +264,12 @@ def thread_work(market, num):
                         bid = latest_summary['Bid']
                         bittrex.place_sell_order(bid)
                         current_state = "InitTrendingUp"
+
+                if balance > 0 and (latest_summary['Bid'] * balance) > (0.00150373 * 1.1):
+                    bid = latest_summary['Bid']
+                    bittrex.place_sell_order(bid)
+                    current_state = "InitTrendingUp"
+
 
 
 
