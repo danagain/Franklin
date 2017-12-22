@@ -16,6 +16,7 @@ from apicall import ApiCall
 
 BTC_PER_PURCHASE = 0.00150000
 CURRENT_HOUR = 0
+CURRENT_MIN = 0
 # For talking with Splunk Container
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -42,268 +43,146 @@ class MyThread(threading.Thread):
         """
         thread_work(self.market, self.num)
 
-
-def send_event(splunk_host, auth_token, log_data):
-   """Sends an event to the HTTP Event collector of a Splunk Instance"""
-
-   try:
-      # Integer value representing epoch time format
-     # event_time = 0
-
-      # String representing the host name or IP
-      host_id = "splunk"
-
-      # String representing the Splunk sourcetype, see:
-      # docs.splunk.com/Documentation/Splunk/6.3.2/Data/Listofpretrainedsourcetypes
-      source_type = "access_combined"
-
-      # Create request URL
-      request_url = "https://%s:8088/services/collector" % splunk_host
-
-      post_data = {
-        # "time": event_time,
-         "host": host_id,
-         "sourcetype": source_type,
-         "event": log_data
-      }
-
-      # Encode data in JSON utf-8 format
-      data = json.dumps(post_data).encode('utf8')
-
-      # Create auth header
-      auth_header = "Splunk %s" % auth_token
-      headers = {'Authorization' : auth_header}
-
-      # Create request
-      req = urllib.request.Request(request_url, data, headers)
-      response = urllib.request.urlopen(req)
-
-      # read response, should be in JSON format
-      read_response = response.read()
-
-      try:
-         response_json = json.loads(str(read_response)[2:-1])
-
-         if "text" in response_json:
-            if response_json["text"] == "Success":
-               post_success = True
-            else:
-               post_success = False
-      except:
-         post_success = False
-
-      if post_success == True:
-         # Event was recieved successfully
-         print ("Event was recieved successfully by the API")
-      else:
-         # Event returned an error
-         print ("Error sending request.")
-
-   except Exception as err:
-      # Network or connection error
-      post_success = False
-      print ("Error sending request")
-      print (str(err))
-
-   return post_success
-
 def track_btc_balance(bittrex):
     balance = bittrex.get_btc_balance()
     return balance
 
+def update_clock_globals(latest_summary):
+    day_and_time_str = latest_summary['TimeStamp'].split("T")
+    hour_min_sec = day_and_time_str[1].split(":")
+    global CURRENT_HOUR
+    global CURRENT_MIN
+    CURRENT_HOUR = hour_min_sec[0]
+    CURRENT_MIN = hour_min_sec[1]
+
+
 def thread_work(market, num):
     """
-    Designated area for threads to buy and sell
+    Initialise all components
     """
-    global CURRENT_HOUR
-    time.sleep(num)
-    bittrex = Bittrex(market)#make an instance of the bittrex class which takes market as a constructor arg
-    apicall = ApiCall()
-    time.sleep(1)
-    mea = bittrex.calculate_mea(10, 'hour')#"oneMin", "fiveMin", "thirtyMin", "hour" and "day"
-    time.sleep(1)
-    mea2 = bittrex.calculate_mea(21, 'hour')
-    print("ema 10  ", market, " ", mea )
-    print("ema 21  ", market, " ", mea2 )
-    current_purchase = 99999999999
-    balance = bittrex.get_balance()
-    current_state = ""
-    if mea > mea2:
-        current_state = "InitTrendingUp"
+    global CURRENT_HOUR #global so threads can read the time
+    global CURRENT_MIN# ^^
+    time.sleep(num)# incremental sleep timer to stop every thread calling api at once
+    bittrex = Bittrex(market)#init bittrex class
+    apicall = ApiCall()#init api class
+    latest_summary = bittrex.get_latest_summary()#get the latest market summary
+    new_hour = True#init the new hour as True
+    new_min = True
+    update_clock_globals(latest_summary)#init the hunter_time_hour to current hour
+    hunter_time_hour = CURRENT_HOUR
+    hunter_time_min = CURRENT_MIN
+    current_purchase_price_hourly = 999999 #assign an initial value to the current purchase price
+    current_purchase_price_min = 999999 #assign an initial value to the current purchase price
+    current_state_min = "NoTrade"
+    hour_purchase_qty = 0
+    min_purchase_qty = 0
+    #Init the EMA to detect current coin trend status
+    ema = bittrex.calculate_ema(10, 'hour')#"oneMin", "fiveMin", "thirtyMin", "hour" and "day"
+    ema2 = bittrex.calculate_ema(21, 'hour')
+    if ema < ema2 * 1.0025:
+        current_state = "TrendingUp" #if the 10 ema is initially above the 21 EMA then coins trending up
     else:
-        current_state = "TrendingDown"
-    time.sleep(90)
-    while True:
-        time.sleep(num*2)
-        balance = bittrex.get_balance()
-        latest_summary = bittrex.get_latest_summary()
-        mea = bittrex.calculate_mea(10, 'hour')
-        time.sleep(1)
-        mea2 = bittrex.calculate_mea(21, 'hour')
-        #Getting the current bttrex time
+        current_state = "TrendingDown"#else its down
+
+    while True: #hunt forever $$
+        #variables that need to update every loop
+        latest_summary = bittrex.get_latest_summary()#get the latest market summary
+        btc_balance = track_btc_balance(bittrex) #check btc balance
+        time.sleep(5)
+
+        #Restrict time management to only the eth thread
         if market == "BTC-ETH":
-            day_and_time_str = latest_summary['TimeStamp'].split("T")
-            hour_min_sec = day_and_time_str[1].split(":")
-            global CURRENT_HOUR
-            CURRENT_HOUR = hour_min_sec[0]
-        print("Current Hour is ", CURRENT_HOUR, " Performing a hunt")
-        last_closing_price = bittrex.last_closing(1, 'hour')
-        gain_loss_percent = latest_summary['Last']/latest_summary['PrevDay']
-        if current_state == "InitTrendingUp" and mea < (0.999 * mea2):
-            current_state = "TrendingDown"
-            #If  ema lines are forming the opening arc and we are in the right state to purchase, then enter the purchase logic
-        if balance is not None:
-            while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp" and (balance * latest_summary['Last'])  < 0.00050000 and  gain_loss_percent <= 1.15:
-                #while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp"  and  gain_loss_percent <= 1.15: # TRAIL ACCOUNT
-                """
-                While we are in between these thresholds we only want to buy at a reasonable ask price
-                """
-                btc_balance = track_btc_balance(bittrex) #check btc balance
-                if btc_balance < 1.0025 * BTC_PER_PURCHASE:#if we dont have enough then dont try and buy
-                    break
-                mea = bittrex.calculate_mea(10, 'hour')
-                time.sleep(1)
-                mea2 = bittrex.calculate_mea(21, 'hour')
-                latest_summary = bittrex.get_latest_summary()
-                ask = latest_summary['Ask']
-                if ask < mea * 1.015:
-                        #If we get in here, I want to see what market
-                    for i in range(10):
-                        print("\n###############\n")
-                        print("Buy Signal for: ", market)
-                        print("\n###############\n")
-                    qty = BTC_PER_PURCHASE / ask
-                    current_state = bittrex.place_buy_order(qty, ask)
-                    if current_state == "TrendingUp":
-                        current_purchase = ask #price that the bot bought at
-                        break
-                time.sleep(40)
-
-        else:
-            while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp" and  gain_loss_percent <= 1.15:
-                    #while mea > (1.009 * mea2) and current_state != "InitTrendingUp" and current_state != "TrendingUp"  and  gain_loss_percent <= 1.15: # TRAIL ACCOUNT
-                """
-                While we are in between these thresholds we only want to buy at a reasonable ask price
-                """
-                mea = bittrex.calculate_mea(10, 'hour')
-                time.sleep(2)
-                mea2 = bittrex.calculate_mea(21, 'hour')
-                latest_summary = bittrex.get_latest_summary()
-                ask = latest_summary['Ask']
-                if ask < mea * 1.015:
-                            #If we get in here, I want to see what market
-                    for i in range(10):
-                        print("\n###############\n")
-                        print("Buy Signal for: ", market)
-                        print("\n###############\n")
-                    qty = BTC_PER_PURCHASE / ask
-                    current_state = bittrex.place_buy_order(qty, ask)
-                    if current_state == "TrendingUp":
-                        current_purchase = ask #price that the bot bought at
-                        break
-                time.sleep(40)
-
+            update_clock_globals(latest_summary)
+            if hunter_time_hour != CURRENT_HOUR: #if the times changed...
+                hunter_time_hour = CURRENT_HOUR #take the new time
+                new_hour = True#let hunter know its a new hour
+            if hunter_time_min != CURRENT_MIN:
+                hunter_time_min = CURRENT_MIN
+                new_min = True
+        #perform minuite tasks
+        if new_min == True:
             """
-            Selling Logic
+            Minuite tasks involve calculating the RSI for the given coins and deciding if the coin is over or under bought
             """
-        while current_state == "TrendingUp":
+            RSI = bittrex.calculate_rsi(14, 'oneMin')
+            print("Calculated RSI value = ", RSI)
+            """
+            Rule #1
+            When coin is in a downtrend identified via the 1hr 21,10 ema lines. Hunter should be more careful and aim
+            for smaller profits. (stock is unlikely to be overbought whilst trending down) using this logic
+            hunter will purchase stock when it is over sold, but sell stock when in profit margin with RSI > 50
 
-                ticker_data = apicall.get_last_ticker_data(market, 1, 'fiveMin')
-                last_closing_price = bittrex.last_closing(1, 'hour')
-                mea = bittrex.calculate_mea(10, 'hour')
-                time.sleep(2)
-                mea2 = bittrex.calculate_mea(21, 'hour')
-                balance = bittrex.get_balance()
-                latest_summary = bittrex.get_latest_summary()
+            Stock can be identified as over sold if the RSI is less than or equal to 20 - We can tweak this (20 is very overbought and on the safe side !)
+            """
+            if RSI <= 20: #if stock is over bought !
+                if btc_balance > hour_purchase_qty * ask: #Check we have enough bitcoin
+                    ask = latest_summary['Ask'] #guarentee the purchase !
+                    min_purchase_qty = BTC_PER_PURCHASE / ask #set the qty
+                    current_state_min = bittrex.place_buy_order(qty, ask)
+                    if current_state_min == "InTrade":
+                        current_purchase_price_min = ask
 
-                bid = current_purchase * 1.105
-                qty = balance
+            #Sell for smaller profit margin when down trending (Smaller RSI)
+            if RSI >= 50 and current_state_min == "InTrade" and latest_summary['Bid'] >= current_purchase_price_min * 1.015 and current_state == "TrendingDown":
+                bid = latest_summary['Bid']
                 bittrex.place_sell_order(bid)
-                current_state = "InitTrendingUp"
-                """
-                If the lines cross back then sell
-                """
-                if (mea * 0.998) < mea2:
-                    bid = latest_summary['Bid']
-                    qty = balance
-                    bittrex.place_sell_order(bid)
-                    current_state = "TrendingDown"
+            #Sell for larger profit margin when up trending (larger RSI)
+            if RSI >= 78 and current_state_min == "InTrade" and latest_summary['Bid'] >= current_purchase_price_min * 1.015 and current_state == "TrendingUp":
+                bid = latest_summary['Bid']
+                bittrex.place_sell_order(bid)
+            """
+            Rule #2 TO-DO
+            During an uptrend there will be stages when the stock is over bought ,
+            the hunter should sell the shares then buy back when RSI <= 60 (assuming up trend still going)
 
-                """
-                This is our stop loss logic
-                """
-                if latest_summary['Last'] <= (current_purchase * 0.9): #If down 10% then sell
-                    bid = latest_summary['Last']
-                    bittrex.place_sell_order(bid)
-                    if mea > mea2:
-                        current_state = "InitTrendingUp"#if  10 mea is above  21 mea, set the right state
-                    else:
-                        current_state = "StoppedLoss"# as long as state is not InitTrendingUp hunter will buy again at the right time
+            """
+            new_min = False
+        #Perform hourly task
+        if new_hour == True:
+            """
+            Hourly task involves calculating the EMA values, checking if they have changed from trending down
+            to trending up
+            """
+            ema = bittrex.calculate_ema(10, 'hour')#"oneMin", "fiveMin", "thirtyMin", "hour" and "day"
+            ema2 = bittrex.calculate_ema(21, 'hour')
+            print("ema 10  ", market, " ", ema )
+            print("ema 21  ", market, " ", ema2 )
+            #check the EMA values and compare against the current_state in memory
+            if current_state == "TrendingUp" and ema * 1.0025 < ema2: # ema must be 0.0025 percent less than ema2 (0.0025 threshold)
+                current_state = "TrendingDown"
+            elif current_state == "TrendingDown" and ema * 1.0025 > ema2:
+                current_state = "HourlyBuyZone"
+            new_hour = False#turn off the new hour until hunter realises that the hour has changed
 
-                #seperate rules for these coins
-                good_coins = ["BTC-LTC", "BTC-ETH", "BTC-DASH", "BTC-NEO", "BTC-XRP", "BTC-ZEC"]
-                """
-                Sell good coins for larger percent gains
-                """
-                if market in good_coins:
-                    if latest_summary['Bid'] > (current_purchase * 1.30):
-                        bid = latest_summary['Bid']
-                        bittrex.place_sell_order(bid)
-                        current_state = "InitTrendingUp"
-                """
-                Sell shit coins for smaller percent gains
-                """
-                if market not in good_coins:
-                    if latest_summary['Bid'] > (current_purchase * 1.10):
-                        bid = latest_summary['Bid']
-                        bittrex.place_sell_order(bid)
-                        current_state = "InitTrendingUp"
-                """
-                This is to detect and bail out of pump and dumps at a small profit
-                I was going to add some conditions to make sure we are in profit range, but im going to just
-                see how selling no matter what, when the ticker rolls over from a pump
-                """
-                """
-                if ticker_data is not None:
-                    if (ticker_data[0]['C'] / ticker_data[0]['O']) > 1.15 and latest_summary['Last'] >= current_purchase * 1.005: # if the pump in the last hour was greater than a 15 percent rise, get out straight away
-                        bid = latest_summary['Bid']
-                        bittrex.place_sell_order(bid)
-                        current_state = "InitTrendingUp"
-                        """
+        #Now in the main loop we should look out for if we are in an hourly buy zone and continually check if
+        #there is a decent buy in position
+        if current_state == "HourlyBuyZone":
+            ask = latest_summary['Ask']
+            if ask < ema * 1.01: #if we are looking to buy, and the asking price is 1 percent away from our ema line
+                    for i in range(10):
+                        print("\n###############\n")
+                        print("Buy Signal for: ", market)
+                        print("\n###############\n")
+                    hour_purchase_qty = BTC_PER_PURCHASE / ask #Get purchase qty
+                    if btc_balance > hour_purchase_qty * ask: #Check we have enough bitcoin
+                        current_state = bittrex.place_buy_order(hour_purchase_qty, ask)
+                        if current_state == "InTrade": #if we know the bot bought
+                            current_state = "InHourlyTrade" #identify the type of trade
+                            current_purchase_price_hourly = ask #price that the bot bought at
 
-                """
-                This is useful for when the hunter doesn't have previous buys loaded into memory for stop loss prevention,
-                the calculation is based on the BTC_PER_PURCHASE global variable value
-                """
-                if balance > 0 and (latest_summary['Last'] * balance) <= (BTC_PER_PURCHASE * 0.8):
-                        bid = latest_summary['Last']
-                        bittrex.place_sell_order(bid)
-                        current_state = "InitTrendingUp" #this will stop hunter buying the same thing and losing possibly multiple times
-                if balance > 0 and (latest_summary['Last'] * balance) <= (BTC_PER_PURCHASE * 1.1):
-                        bid = latest_summary['Last']
-                        bittrex.place_sell_order(bid)
-                        current_state = "InitTrendingUp" #this will stop hunter buying the same thing and losing possibly multiple times
+        #if the hunters currently in an hourly trade using the EMA lines then check if they have crossed back into down trend
+        if current_state == "InHourlyTrade" and ema * 1.0025 < ema2:
+                bid = latest_summary['Bid']
+                bittrex.place_sell_order(bid)
+                current_state = "TrendingDown"
+        #if we are down 10 percent on a trade than just ditch it
+        if current_state == "InHourlyTrade" and current_purchase_price_hourly < latest_summary['Bid'] * 0.90:
+                bid = latest_summary['Bid']
+                bittrex.place_sell_order(bid)
+                current_state = "TrendingDown"
 
 
-                time.sleep(8)
 
-        print("Last Price: ",latest_summary['Last'])
-        print("Current Purchase: ", current_purchase)
-        print("ema 10  ", market, " ", mea )
-        print("ema 21  ", market, " ", mea2 )
-        print("Current state:", current_state, "\n" )
-        hunter_time = CURRENT_HOUR #assign a variable time to the current hour that the hunter has in memory
-        #keep checking time until the change of hour breaks the while loop
-        while CURRENT_HOUR == hunter_time:
-            if market == "BTC-ETH":
-                    latest_summary = bittrex.get_latest_summary()
-                    #Getting the current bttrex time
-                    day_and_time_str = latest_summary['TimeStamp'].split("T")
-                    hour_min_sec = day_and_time_str[1].split(":")
-                    CURRENT_HOUR = hour_min_sec[0]
-                    time.sleep(10)
-            else:
-                    time.sleep(10)
 
 
 
@@ -313,11 +192,13 @@ if __name__ == "__main__":
     apicall = ApiCall() #instance of the ApiCall class
     markets = apicall.get_markets() # Get all of the markets from the WEB-API
     THREADS = []
-    for c in range(0, len(markets)):
+    #for c in range(0, len(markets)):
+    for c in range(0, 1): #temp to start just one thread
         t = MyThread(markets[c], c)
         t.setDaemon(True)
         THREADS.append(t)
-    for i in range(0, len(markets)):
+    #for i in range(0, len(markets)):
+    for i in range(0, 1):
         THREADS[i].start()
         time.sleep(1)
     while threading.active_count() > 0:

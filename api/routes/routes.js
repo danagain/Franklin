@@ -52,6 +52,7 @@ const routes = () => {
           "BTC-LTC",
           "BTC-POWR",
           "BTC-OMG",
+          "BTC-XVG",
           "BTC-TIX",
           "BTC-TRIG",
           "BTC-XRP",
