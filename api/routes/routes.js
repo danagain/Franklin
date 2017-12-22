@@ -43,6 +43,8 @@ const routes = () => {
       {
         markets: [
           "BTC-ETH",
+          "BTC-ADA",
+          "BTC-XVG",
           "BTC-BCC",
           "BTC-BTG",
           "BTC-SYS",
@@ -52,7 +54,6 @@ const routes = () => {
           "BTC-LTC",
           "BTC-POWR",
           "BTC-OMG",
-          "BTC-XVG",
           "BTC-TIX",
           "BTC-TRIG",
           "BTC-XRP",
@@ -65,7 +66,6 @@ const routes = () => {
           "BTC-DCR",
           "BTC-POT",
           "BTC-ZEC",
-          "BTC-ADA",
           "BTC-XLM",
           "BTC-NXT",
           "BTC-QTUM",

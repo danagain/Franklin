@@ -94,12 +94,13 @@ def thread_work(market, num):
         #Restrict time management to only the eth thread
         if market == "BTC-ETH":
             update_clock_globals(latest_summary)
-            if hunter_time_hour != CURRENT_HOUR: #if the times changed...
-                hunter_time_hour = CURRENT_HOUR #take the new time
-                new_hour = True#let hunter know its a new hour
-            if hunter_time_min != CURRENT_MIN:
-                hunter_time_min = CURRENT_MIN
-                new_min = True
+            time.sleep(0.5)
+        if hunter_time_hour != CURRENT_HOUR: #if the times changed...
+            hunter_time_hour = CURRENT_HOUR #take the new time
+            new_hour = True#let hunter know its a new hour
+        if hunter_time_min != CURRENT_MIN:
+            hunter_time_min = CURRENT_MIN
+            new_min = True
         #perform minuite tasks
         if new_min == True:
             """
@@ -208,12 +209,12 @@ if __name__ == "__main__":
     markets = apicall.get_markets() # Get all of the markets from the WEB-API
     THREADS = []
     #for c in range(0, len(markets)):
-    for c in range(0, 1): #temp to start just one thread
+    for c in range(0, 3): #temp to start just one thread
         t = MyThread(markets[c], c)
         t.setDaemon(True)
         THREADS.append(t)
     #for i in range(0, len(markets)):
-    for i in range(0, 1):
+    for i in range(0, 3):
         THREADS[i].start()
         time.sleep(1)
     while threading.active_count() > 0:
