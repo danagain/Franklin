@@ -88,6 +88,7 @@ def thread_work(market, num):
         #variables that need to update every loop
         latest_summary = bittrex.get_latest_summary()#get the latest market summary
         btc_balance = track_btc_balance(bittrex) #check btc balance
+        balance = bittrex.get_balance()#check coin balance
         time.sleep(5)
 
         #Restrict time management to only the eth thread
@@ -114,9 +115,18 @@ def thread_work(market, num):
 
             Stock can be identified as over sold if the RSI is less than or equal to 20 - We can tweak this (20 is very overbought and on the safe side !)
             """
-            if RSI <= 20: #if stock is over bought !
+            #Buying time !
+            if RSI <= 20 and balance is None: #if stock is over bought !
+                ask = latest_summary['Ask'] #guarentee the purchase !
                 if btc_balance > hour_purchase_qty * ask: #Check we have enough bitcoin
-                    ask = latest_summary['Ask'] #guarentee the purchase !
+                    min_purchase_qty = BTC_PER_PURCHASE / ask #set the qty
+                    current_state_min = bittrex.place_buy_order(qty, ask)
+                    if current_state_min == "InTrade":
+                        current_purchase_price_min = ask
+
+            elif RSI <= 20 and balance == 0: #if stock is over bought !
+                ask = latest_summary['Ask'] #guarentee the purchase !
+                if btc_balance > hour_purchase_qty * ask: #Check we have enough bitcoin
                     min_purchase_qty = BTC_PER_PURCHASE / ask #set the qty
                     current_state_min = bittrex.place_buy_order(qty, ask)
                     if current_state_min == "InTrade":
@@ -126,8 +136,13 @@ def thread_work(market, num):
             if RSI >= 50 and current_state_min == "InTrade" and latest_summary['Bid'] >= current_purchase_price_min * 1.015 and current_state == "TrendingDown":
                 bid = latest_summary['Bid']
                 bittrex.place_sell_order(bid)
+
             #Sell for larger profit margin when up trending (larger RSI)
             if RSI >= 78 and current_state_min == "InTrade" and latest_summary['Bid'] >= current_purchase_price_min * 1.015 and current_state == "TrendingUp":
+                bid = latest_summary['Bid']
+                bittrex.place_sell_order(bid)
+            #Stop loss for minuite trading
+            if current_state_min == "InTrade" and current_purchase_price_min * 0.9 <= latest_summary['Bid']:
                 bid = latest_summary['Bid']
                 bittrex.place_sell_order(bid)
             """
