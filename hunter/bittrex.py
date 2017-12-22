@@ -82,17 +82,17 @@ class Bittrex:
         self.cancel_order() #cancel the order
         return "HourlyBuyZone" #bot couldnt buy so keep hunting
 
-    def place_sell_order(self, price):
+    def place_sell_order(self, price, qty):
         """
         Place a sell order
         """
         #make sure we have the right qty
-        qty = self.get_balance()
+        qty_ = qty
         if (qty * price) < 0.00060000:
             return "NoBuy"
         #Dictionary of sell order params for WEB-API to send to bittrex
         sell_dict = {'Coin': self.market, 'OrderType':'LIMIT',\
-            'Quantity': qty, 'Rate':price,\
+            'Quantity': qty_, 'Rate':price,\
             'TimeInEffect':'GOOD_TIL_CANCELLED', \
             'ConditionType': 'NONE', 'Target': 0}
         #Sending the purchase request to our web-api

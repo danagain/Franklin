@@ -117,15 +117,7 @@ def thread_work(market, num):
             Stock can be identified as over sold if the RSI is less than or equal to 20 - We can tweak this (20 is very overbought and on the safe side !)
             """
             #Buying time !
-            if RSI <= 20 and balance is None: #if stock is over bought !
-                ask = latest_summary['Ask'] #guarentee the purchase !
-                if btc_balance > hour_purchase_qty * ask: #Check we have enough bitcoin
-                    min_purchase_qty = BTC_PER_PURCHASE / ask #set the qty
-                    current_state_min = bittrex.place_buy_order(qty, ask)
-                    if current_state_min == "InTrade":
-                        current_purchase_price_min = ask
-
-            elif RSI <= 20 and balance == 0: #if stock is over bought !
+            if RSI <= 20 and current_state != "InTrade": #if stock is over bought !
                 ask = latest_summary['Ask'] #guarentee the purchase !
                 if btc_balance > hour_purchase_qty * ask: #Check we have enough bitcoin
                     min_purchase_qty = BTC_PER_PURCHASE / ask #set the qty
@@ -136,16 +128,16 @@ def thread_work(market, num):
             #Sell for smaller profit margin when down trending (Smaller RSI)
             if RSI >= 50 and current_state_min == "InTrade" and latest_summary['Bid'] >= current_purchase_price_min * 1.015 and current_state == "TrendingDown":
                 bid = latest_summary['Bid']
-                bittrex.place_sell_order(bid)
+                bittrex.place_sell_order(bid, min_purchase_qty)
 
             #Sell for larger profit margin when up trending (larger RSI)
             if RSI >= 78 and current_state_min == "InTrade" and latest_summary['Bid'] >= current_purchase_price_min * 1.015 and current_state == "TrendingUp":
                 bid = latest_summary['Bid']
-                bittrex.place_sell_order(bid)
+                bittrex.place_sell_order(bid, min_purchase_qty)
             #Stop loss for minuite trading
             if current_state_min == "InTrade" and current_purchase_price_min * 0.9 <= latest_summary['Bid']:
                 bid = latest_summary['Bid']
-                bittrex.place_sell_order(bid)
+                bittrex.place_sell_order(bid, min_purchase_qty)
             """
             Rule #2 TO-DO
             During an uptrend there will be stages when the stock is over bought ,
@@ -189,12 +181,12 @@ def thread_work(market, num):
         #if the hunters currently in an hourly trade using the EMA lines then check if they have crossed back into down trend
         if current_state == "InHourlyTrade" and ema * 1.0025 < ema2:
                 bid = latest_summary['Bid']
-                bittrex.place_sell_order(bid)
+                bittrex.place_sell_order(bid, hour_purchase_qty)
                 current_state = "TrendingDown"
         #if we are down 10 percent on a trade than just ditch it
         if current_state == "InHourlyTrade" and current_purchase_price_hourly < latest_summary['Bid'] * 0.90:
                 bid = latest_summary['Bid']
-                bittrex.place_sell_order(bid)
+                bittrex.place_sell_order(bid, hour_purchase_qty)
                 current_state = "TrendingDown"
 
 
