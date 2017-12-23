@@ -171,7 +171,7 @@ class Bittrex:
         This function calculates the relative strength index of the market
         """
         last_closing_price = self.apicall.get_historical(self.market, period, interval)
-        while last_closing_price == None or isinstance(last_closing_price, list) == False:
+        while last_closing_price == None or isinstance(last_closing_price, list) == False or len(last_closing_price) < 100:
             time.sleep(2)
             last_closing_price = self.apicall.get_historical(self.market, period, interval)
 
@@ -204,8 +204,9 @@ class Bittrex:
         """
         K = 1/period
         N = period
-        avgUp_yesterday = up_list[0]
-        avgDown_yesterday = down_list[0]
+        if len(up_list) > 0 and len(down_list) > 0:
+            avgUp_yesterday = up_list[0]
+            avgDown_yesterday = down_list[0]
         for i in range(len(up_list)-1):
             #For the Up avg
             avgUp_today = (up_list[i + 1] * K) + (avgUp_yesterday * (1 - K))
