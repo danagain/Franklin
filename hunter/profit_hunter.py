@@ -206,12 +206,12 @@ if __name__ == "__main__":
     markets = apicall.get_markets() # Get all of the markets from the WEB-API
     THREADS = []
     #for c in range(0, len(markets)):
-    for c in range(0, 3): #temp to start just one thread
+    for c in range(0, 7): #temp to start just one thread
         t = MyThread(markets[c], c)
         t.setDaemon(True)
         THREADS.append(t)
     #for i in range(0, len(markets)):
-    for i in range(0, 3):
+    for i in range(0, 7):
         THREADS[i].start()
         time.sleep(0.1)
     while threading.active_count() > 0:

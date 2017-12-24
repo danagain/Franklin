@@ -13,10 +13,10 @@ const email = (body) => {
 
     // Message object
     const mailOptions = {
-        from: 'thehunterofcoins@gmail.com', 
+        from: 'thehunterofcoins@gmail.com',
         to: process.env.EMAIL_TARGET,
-        subject: `${body.result.BuyOrSell} - ${body.result.MarketName} - Hunted`, 
-        html: `The ${body.result.BuyOrSell} for ${body.result.MarketName} at ${body.result.Quantity}.`
+        subject: `${body.result.BuyOrSell} - ${body.result.MarketName} - Hunted`,
+        html: `A ${body.result.BuyOrSell} for ${body.result.MarketName} - ${body.result.Quantity} shares at ${body.result.Rate} was purchased.`
       };
 
     transporter.sendMail(mailOptions, (error, info) => {
@@ -31,4 +31,3 @@ const email = (body) => {
 module.exports = {
     email
 }
-
