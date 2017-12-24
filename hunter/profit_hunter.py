@@ -119,14 +119,13 @@ def thread_work(market, num):
             """
             #Buying time !
             if RSI <= 22 and current_state != "InTrade": #if stock is over bought !
-                btc_balance = track_btc_balance(bittrex) #check btc balance
-                balance = bittrex.get_balance()#check coin balance
+                #btc_balance = track_btc_balance(bittrex) #check btc balance
+                #balance = bittrex.get_balance()#check coin balance
                 ask = latest_summary['Ask'] #guarentee the purchase !
-                if btc_balance > hour_purchase_qty * ask: #Check we have enough bitcoin
-                    min_purchase_qty = BTC_PER_PURCHASE / ask #set the qty
-                    current_state_min = bittrex.place_buy_order(qty, ask)
-                    if current_state_min == "InTrade":
-                        current_purchase_price_min = ask
+                min_purchase_qty = BTC_PER_PURCHASE / ask #set the qty
+                current_state_min = bittrex.place_buy_order(min_purchase_qty, ask)
+                if current_state_min == "InTrade":
+                    current_purchase_price_min = ask
 
             #Sell for smaller profit margin when down trending (Smaller RSI)
             if RSI >= 50 and current_state_min == "InTrade" and latest_summary['Bid'] >= current_purchase_price_min * 1.015 and current_state == "TrendingDown":
@@ -138,7 +137,7 @@ def thread_work(market, num):
                 bid = latest_summary['Bid']
                 bittrex.place_sell_order(bid, min_purchase_qty)
             #Stop loss for minuite trading
-            if current_state_min == "InTrade" and current_purchase_price_min * 0.9 <= latest_summary['Bid']:
+            if current_state_min == "InTrade" and latest_summary['Bid'] <= (current_purchase_price_min * 0.9):
                 bid = latest_summary['Bid']
                 bittrex.place_sell_order(bid, min_purchase_qty)
             """
