@@ -69,7 +69,7 @@ class Bittrex:
         self.apicall.http_request("buy", purchase_dict, 'Post')
         #Lets wait 1 minuite, checking 3 times on the state of our purchase order
         for i in range(3):
-            time.sleep(2)
+            time.sleep(20)
             #Getting the current balance of our coin
             current_balance = self.get_balance()
             #If the balance of our coin is greater than zero, then our order has
@@ -135,7 +135,7 @@ class Bittrex:
         @param interval: The desired tick interval
         """
         last_closing_price = self.apicall.get_historical(self.market, period, interval)
-        while last_closing_price == None or isinstance(last_closing_price, list) == False:
+        while last_closing_price == None or isinstance(last_closing_price, list) == False or len(last_closing_price) < 100:
             last_closing_price = self.apicall.get_historical(self.market, period, interval)
             time.sleep(2)
 

@@ -118,7 +118,7 @@ def thread_work(market, num):
             Stock can be identified as over sold if the RSI is less than or equal to 20 - We can tweak this (20 is very overbought and on the safe side !)
             """
             #Buying time !
-            if RSI <= 22 and current_state != "InTrade": #if stock is over bought !
+            if RSI <= 22 and current_state_min != "InTrade": #if stock is over bought !
                 #btc_balance = track_btc_balance(bittrex) #check btc balance
                 #balance = bittrex.get_balance()#check coin balance
                 ask = latest_summary['Ask'] #guarentee the purchase !
