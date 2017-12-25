@@ -43,8 +43,8 @@ const routes = () => {
       {
         markets: [
           "BTC-ADA",
-          "BTC-XVG",
-          "BTC-XRP",
+          "BTC-NXT",
+          "BTC-PAY",
                     //changes here
           "BTC-DGB",
           "BTC-STRAT",
