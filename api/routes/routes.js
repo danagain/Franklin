@@ -45,6 +45,15 @@ const routes = () => {
           "BTC-ADA",
           "BTC-XVG",
           "BTC-XRP",
+                    //changes here
+          "BTC-DGB",
+          "BTC-STRAT",
+          "BTC-SC",
+          "BTC-PAY",
+          "BTC-MCO",
+          "BTC-NXT",
+          "BTC-BAY",
+          //
           "BTC-ETH",
           "BTC-NEO",
           "BTC-BCC",

@@ -118,7 +118,7 @@ def thread_work(market, num):
             Stock can be identified as over sold if the RSI is less than or equal to 20 - We can tweak this (20 is very overbought and on the safe side !)
             """
             #Buying time !
-            if RSI <= 22 and current_state_min != "InTrade": #if stock is over bought !
+            if RSI <= 18 and current_state_min != "InTrade": #if stock is over bought !
                 #btc_balance = track_btc_balance(bittrex) #check btc balance
                 #balance = bittrex.get_balance()#check coin balance
                 ask = latest_summary['Ask'] #guarentee the purchase !
@@ -128,14 +128,10 @@ def thread_work(market, num):
                     current_purchase_price_min = ask
 
             #Sell for smaller profit margin when down trending (Smaller RSI)
-            if RSI >= 50 and current_state_min == "InTrade" and latest_summary['Bid'] >= current_purchase_price_min * 1.015 and current_state == "TrendingDown":
+            if  current_state_min == "InTrade" and latest_summary['Bid'] >= current_purchase_price_min * 1.015:
                 bid = latest_summary['Bid']
                 bittrex.place_sell_order(bid, min_purchase_qty)
 
-            #Sell for larger profit margin when up trending (larger RSI)
-            if RSI >= 78 and current_state_min == "InTrade" and latest_summary['Bid'] >= current_purchase_price_min * 1.015 and current_state == "TrendingUp":
-                bid = latest_summary['Bid']
-                bittrex.place_sell_order(bid, min_purchase_qty)
             #Stop loss for minuite trading
             if current_state_min == "InTrade" and latest_summary['Bid'] <= (current_purchase_price_min * 0.9):
                 bid = latest_summary['Bid']
@@ -192,7 +188,10 @@ def thread_work(market, num):
         if current_state == "InHourlyTrade" and current_purchase_price_hourly < latest_summary['Bid'] * 0.90:
                 bid = latest_summary['Bid']
                 bittrex.place_sell_order(bid, hour_purchase_qty)
-                current_state = "TrendingDown"
+                if ema > ema2:
+                    current_state = "TrendingUp" 
+                else:
+                    current_state = "TrendingDown"
 
 
 
@@ -206,12 +205,12 @@ if __name__ == "__main__":
     markets = apicall.get_markets() # Get all of the markets from the WEB-API
     THREADS = []
     #for c in range(0, len(markets)):
-    for c in range(0, 7): #temp to start just one thread
+    for c in range(0, 3): #temp to start just one thread
         t = MyThread(markets[c], c)
         t.setDaemon(True)
         THREADS.append(t)
     #for i in range(0, len(markets)):
-    for i in range(0, 7):
+    for i in range(0, 3):
         THREADS[i].start()
         time.sleep(0.1)
     while threading.active_count() > 0:
